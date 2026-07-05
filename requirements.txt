@@ -1,0 +1,31 @@
+# Nexus Sentinel — dependencias (sección 9 del plan)
+# Adquisición y datos masivos
+requests
+pandas
+polars
+pyarrow
+
+# Grafo
+networkx
+
+# EDA / visualización
+matplotlib
+seaborn
+
+# Modelado y explicabilidad
+scikit-learn
+xgboost
+shap
+joblib
+
+# Backend API (ver api/requirements.txt para el set mínimo del despliegue)
+fastapi
+uvicorn[standard]
+pydantic
+
+# Asistente conversacional (DeepSeek vía SDK de OpenAI; requiere DEEPSEEK_API_KEY)
+openai
+
+# Pruebas de contrato de la API
+pytest
+httpx

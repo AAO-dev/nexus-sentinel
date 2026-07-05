@@ -1,0 +1,31 @@
+# Datos crudos y de trabajo (nunca versionar: auth.txt.gz ~7 GB)
+data/
+*.gz
+*.parquet
+
+# Artefactos serializados (se regeneran desde el notebook)
+models/*.joblib
+models/*.pkl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Frontend
+ui/node_modules/
+ui/dist/
+ui/.env
+ui/*.tsbuildinfo
+
+# Herramientas de construcción de entregables
+docs/entregables/node_modules/
+docs/entregables/package-lock.json
+
+# Sistema / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
