@@ -1,0 +1,15 @@
+# Dependencias MÍNIMAS del backend desplegado (sirve el snapshot precomputado).
+# Con solo esto, los 6 endpoints de lectura + feedback funcionan y /inference/score
+# degrada con un 503 explícito (comportamiento diseñado y cubierto por tests).
+fastapi
+uvicorn[standard]
+pydantic
+
+# Asistente conversacional (requerimiento del profesor): DeepSeek vía SDK de OpenAI.
+# Ligero; se incluye en el despliegue base. El asistente solo funciona si además se define
+# la variable de entorno DEEPSEEK_API_KEY (ver DEPLOY.md).
+openai
+
+# Para habilitar /inference/score (inferencia en vivo) hay que añadir además el stack de
+# modelado del proyecto: pandas, pyarrow, scikit-learn, xgboost, shap, joblib
+# (ver requirements.txt en la raíz). Encarece la imagen: solo si el despliegue lo permite.
