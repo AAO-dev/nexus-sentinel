@@ -1,0 +1,1337 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Nexus Sentinel API",
+    "description": "UEBA sobre datos reales de LANL. Sirve la cola de triage priorizada por riesgo (0-100), siempre acompañada de su explicación SHAP. Ninguna acción sobre cuentas es automática: el sistema prioriza y explica, la decisión es humana.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "sistema"
+        ],
+        "summary": "Health",
+        "description": "Estado del servicio y del snapshot cargado.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/overview": {
+      "get": {
+        "tags": [
+          "triage"
+        ],
+        "summary": "Overview",
+        "description": "KPIs del panel: alertas activas, casos rojos, riesgo organizacional y tendencia diaria.",
+        "operationId": "overview_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees": {
+      "get": {
+        "tags": [
+          "triage"
+        ],
+        "summary": "Employees",
+        "description": "Cola de triage priorizada (usuarios anonimizados U-####).",
+        "operationId": "employees_employees_get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(risk|alertas)$",
+              "default": "risk",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Nivel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra por nivel del semáforo",
+              "title": "Level"
+            },
+            "description": "Filtra por nivel del semáforo"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmpleadoCola"
+                  },
+                  "title": "Response Employees Employees Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{employee_id}/risk": {
+      "get": {
+        "tags": [
+          "empleado"
+        ],
+        "summary": "Employee Risk",
+        "description": "Serie temporal de la puntuación de riesgo (últimos `days` días disponibles).",
+        "operationId": "employee_risk_employees__employee_id__risk_get",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Employee Id"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SerieRiesgo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{employee_id}/explanation": {
+      "get": {
+        "tags": [
+          "empleado"
+        ],
+        "summary": "Employee Explanation",
+        "description": "Top-5 SHAP del día, con el valor del usuario vs. su promedio personal y vs. su peer group.\n\nSolo hay explicación para días con alerta: los verdes son registro pasivo (sección 1 del plan).",
+        "operationId": "employee_explanation_employees__employee_id__explanation_get",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Employee Id"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Explicacion"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{employee_id}/activity": {
+      "get": {
+        "tags": [
+          "empleado"
+        ],
+        "summary": "Employee Activity",
+        "description": "Resumen de autenticaciones del día: destinos nuevos, fallos, NTLM y horario.",
+        "operationId": "employee_activity_employees__employee_id__activity_get",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Employee Id"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Actividad"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{case_id}/feedback": {
+      "post": {
+        "tags": [
+          "triage"
+        ],
+        "summary": "Case Feedback",
+        "description": "Registra la decisión del analista (falso positivo / investigar / escalar).\n\nCierra el ciclo human-in-the-loop: ninguna acción sobre la cuenta es automática, y la decisión\nqueda trazada para auditoría (sección 1.2, perfil de Cumplimiento).\nNota de despliegue: en HF Spaces / Render free el almacenamiento es efímero.",
+        "operationId": "case_feedback_cases__case_id__feedback_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "triage"
+        ],
+        "summary": "Case Feedback History",
+        "description": "Historial de decisiones del analista sobre un caso (vista 2 del plan).\n\nCierra la trazabilidad que exige el perfil de Cumplimiento (sección 1.2): toda decisión sobre\nuna cuenta queda registrada y es consultable.",
+        "operationId": "case_feedback_history_cases__case_id__feedback_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackRegistro"
+                  },
+                  "title": "Response Case Feedback History Cases  Case Id  Feedback Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistant/health": {
+      "get": {
+        "tags": [
+          "asistente"
+        ],
+        "summary": "Assistant Health",
+        "description": "Indica si el asistente conversacional está configurado (DEEPSEEK_API_KEY presente).",
+        "operationId": "assistant_health_assistant_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Assistant Health Assistant Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistant/chat": {
+      "post": {
+        "tags": [
+          "asistente"
+        ],
+        "summary": "Assistant Chat",
+        "description": "Asistente conversacional (requerimiento del profesor): guía al usuario y responde preguntas\nsobre los datos consultando el modelo vía function calling (DeepSeek).\n\nLa API key vive solo en el backend. Sin ella, degrada con 503 explícito.",
+        "operationId": "assistant_chat_assistant_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/inference/score": {
+      "post": {
+        "tags": [
+          "inferencia"
+        ],
+        "summary": "Inference Score",
+        "description": "Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo (sección 6.2 del plan).\n\nDemuestra el flujo completo frente al snapshot precomputado. Requiere los artefactos\nserializados; si no están presentes responde 503 en lugar de fallar de forma opaca.",
+        "operationId": "inference_score_inference_score_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InferenciaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Actividad": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "n_eventos": {
+            "type": "integer",
+            "title": "N Eventos"
+          },
+          "n_dst": {
+            "type": "integer",
+            "title": "N Dst"
+          },
+          "n_destinos_nuevos": {
+            "type": "integer",
+            "title": "N Destinos Nuevos"
+          },
+          "n_origenes_nuevos": {
+            "type": "integer",
+            "title": "N Origenes Nuevos"
+          },
+          "n_fallos": {
+            "type": "integer",
+            "title": "N Fallos"
+          },
+          "ratio_ntlm": {
+            "type": "number",
+            "title": "Ratio Ntlm"
+          },
+          "n_fuera_horario": {
+            "type": "integer",
+            "title": "N Fuera Horario"
+          },
+          "ego_graph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EgoGraph"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "day",
+          "n_eventos",
+          "n_dst",
+          "n_destinos_nuevos",
+          "n_origenes_nuevos",
+          "n_fallos",
+          "ratio_ntlm",
+          "n_fuera_horario"
+        ],
+        "title": "Actividad"
+      },
+      "ChatIn": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MensajeChat"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Messages",
+            "description": "Historial de la conversación, sin el system."
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "ChatIn"
+      },
+      "ChatOut": {
+        "properties": {
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          },
+          "tools_used": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tools Used",
+            "description": "Herramientas de datos que el asistente consultó"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reply"
+        ],
+        "title": "ChatOut"
+      },
+      "ContribucionShap": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "contribucion": {
+            "type": "number",
+            "title": "Contribucion",
+            "description": "Aporte SHAP (signo = dirección)"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "promedio_personal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promedio Personal",
+            "description": "Media histórica del propio usuario"
+          },
+          "promedio_peer": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promedio Peer",
+            "description": "Media de su peer group ese día"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "label",
+          "contribucion",
+          "valor"
+        ],
+        "title": "ContribucionShap"
+      },
+      "Decision": {
+        "type": "string",
+        "enum": [
+          "falso_positivo",
+          "investigar",
+          "escalar"
+        ],
+        "title": "Decision"
+      },
+      "EgoGraph": {
+        "properties": {
+          "nodos_nuevos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Nodos Nuevos",
+            "description": "Destinos tocados por primera vez (en rojo)"
+          },
+          "nodos_conocidos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Nodos Conocidos",
+            "description": "Destinos ya conocidos (en gris)"
+          },
+          "n_nuevos": {
+            "type": "integer",
+            "title": "N Nuevos"
+          },
+          "n_conocidos": {
+            "type": "integer",
+            "title": "N Conocidos"
+          },
+          "n_historicos_totales": {
+            "type": "integer",
+            "title": "N Historicos Totales"
+          },
+          "conocidos_truncados": {
+            "type": "boolean",
+            "title": "Conocidos Truncados",
+            "description": "True si se recortó la lista por legibilidad"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodos_nuevos",
+          "nodos_conocidos",
+          "n_nuevos",
+          "n_conocidos",
+          "n_historicos_totales",
+          "conocidos_truncados"
+        ],
+        "title": "EgoGraph",
+        "description": "Nodos del mini-grafo usuario→computadoras (elemento visual diferenciador, vista 2)."
+      },
+      "EmpleadoCola": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "ID anonimizado",
+            "examples": [
+              "U-0737"
+            ]
+          },
+          "risk_max": {
+            "type": "number",
+            "title": "Risk Max"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Nivel"
+          },
+          "dia_pico": {
+            "type": "integer",
+            "title": "Dia Pico"
+          },
+          "n_dias_alerta": {
+            "type": "integer",
+            "title": "N Dias Alerta"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo",
+            "description": "Razón principal en una línea, derivada del top SHAP"
+          },
+          "es_comprometida": {
+            "type": "integer",
+            "title": "Es Comprometida",
+            "description": "Ground truth (demo académica)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "risk_max",
+          "level",
+          "dia_pico",
+          "n_dias_alerta",
+          "motivo",
+          "es_comprometida"
+        ],
+        "title": "EmpleadoCola"
+      },
+      "Explicacion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "risk": {
+            "type": "number",
+            "title": "Risk"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Nivel"
+          },
+          "prob": {
+            "type": "number",
+            "title": "Prob"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "top_shap": {
+            "items": {
+              "$ref": "#/components/schemas/ContribucionShap"
+            },
+            "type": "array",
+            "title": "Top Shap"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "day",
+          "risk",
+          "level",
+          "prob",
+          "motivo",
+          "top_shap"
+        ],
+        "title": "Explicacion"
+      },
+      "FeedbackIn": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "analista": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Analista",
+            "default": "anonimo"
+          },
+          "dia": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dia"
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "FeedbackIn"
+      },
+      "FeedbackOut": {
+        "properties": {
+          "registrado": {
+            "type": "boolean",
+            "title": "Registrado"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "registrado",
+          "case_id",
+          "decision",
+          "timestamp"
+        ],
+        "title": "FeedbackOut"
+      },
+      "FeedbackRegistro": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "analista": {
+            "type": "string",
+            "title": "Analista"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "dia": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dia"
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "decision",
+          "analista",
+          "timestamp"
+        ],
+        "title": "FeedbackRegistro",
+        "description": "Una decisión registrada, tal como se consulta en el historial del caso."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "snapshot_cargado": {
+            "type": "boolean",
+            "title": "Snapshot Cargado"
+          },
+          "periodo_dias": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Periodo Dias"
+          },
+          "usuarios": {
+            "type": "integer",
+            "title": "Usuarios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_cargado",
+          "periodo_dias",
+          "usuarios"
+        ],
+        "title": "Health"
+      },
+      "InferenciaIn": {
+        "properties": {
+          "employee_id": {
+            "type": "string",
+            "title": "Employee Id",
+            "examples": [
+              "U-0737"
+            ]
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day",
+            "examples": [
+              29
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "employee_id",
+          "day"
+        ],
+        "title": "InferenciaIn"
+      },
+      "InferenciaOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "risk_score": {
+            "type": "number",
+            "title": "Risk Score"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Nivel"
+          },
+          "prob": {
+            "type": "number",
+            "title": "Prob"
+          },
+          "anomaly": {
+            "type": "number",
+            "title": "Anomaly"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "top_shap": {
+            "items": {
+              "$ref": "#/components/schemas/ContribucionShap"
+            },
+            "type": "array",
+            "title": "Top Shap"
+          },
+          "fuente": {
+            "type": "string",
+            "title": "Fuente",
+            "description": "'modelo_en_vivo' o el motivo de la degradación"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "day",
+          "risk_score",
+          "level",
+          "prob",
+          "anomaly",
+          "motivo",
+          "top_shap",
+          "fuente"
+        ],
+        "title": "InferenciaOut"
+      },
+      "KpisSoc": {
+        "properties": {
+          "alertas_por_dia": {
+            "type": "number",
+            "title": "Alertas Por Dia"
+          },
+          "casos_rojos_por_dia": {
+            "type": "number",
+            "title": "Casos Rojos Por Dia"
+          },
+          "pct_falsos_positivos": {
+            "type": "number",
+            "title": "Pct Falsos Positivos",
+            "description": "Sobre las alertas emitidas (ground truth)"
+          },
+          "cuentas_comprometidas_detectadas": {
+            "type": "integer",
+            "title": "Cuentas Comprometidas Detectadas"
+          },
+          "cuentas_comprometidas_totales": {
+            "type": "integer",
+            "title": "Cuentas Comprometidas Totales"
+          },
+          "carga_revisable": {
+            "type": "string",
+            "title": "Carga Revisable"
+          },
+          "tiempo_resolucion_medio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tiempo Resolucion Medio",
+            "description": "Requiere telemetría real de analistas; null en la demo (no se estima)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alertas_por_dia",
+          "casos_rojos_por_dia",
+          "pct_falsos_positivos",
+          "cuentas_comprometidas_detectadas",
+          "cuentas_comprometidas_totales",
+          "carga_revisable"
+        ],
+        "title": "KpisSoc"
+      },
+      "MensajeChat": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "pattern": "^(user|assistant)$",
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "MensajeChat"
+      },
+      "Nivel": {
+        "type": "string",
+        "enum": [
+          "verde",
+          "naranja",
+          "rojo"
+        ],
+        "title": "Nivel"
+      },
+      "Overview": {
+        "properties": {
+          "alertas_activas": {
+            "type": "integer",
+            "title": "Alertas Activas",
+            "description": "Usuario-días en nivel naranja o rojo"
+          },
+          "casos_rojos": {
+            "type": "integer",
+            "title": "Casos Rojos"
+          },
+          "usuarios_monitoreados": {
+            "type": "integer",
+            "title": "Usuarios Monitoreados"
+          },
+          "riesgo_organizacional": {
+            "type": "number",
+            "title": "Riesgo Organizacional",
+            "description": "Riesgo medio 0-100 del periodo"
+          },
+          "cuentas_comprometidas_periodo": {
+            "type": "integer",
+            "title": "Cuentas Comprometidas Periodo",
+            "description": "Ground truth del red team (solo para la demo académica)"
+          },
+          "tendencia": {
+            "items": {
+              "$ref": "#/components/schemas/PuntoTendencia"
+            },
+            "type": "array",
+            "title": "Tendencia"
+          },
+          "tendencia_por_cluster": {
+            "items": {
+              "$ref": "#/components/schemas/PuntoCluster"
+            },
+            "type": "array",
+            "title": "Tendencia Por Cluster",
+            "description": "Riesgo por rol conductual (vista ejecutiva)"
+          },
+          "kpis_soc": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KpisSoc"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "alertas_activas",
+          "casos_rojos",
+          "usuarios_monitoreados",
+          "riesgo_organizacional",
+          "cuentas_comprometidas_periodo",
+          "tendencia"
+        ],
+        "title": "Overview"
+      },
+      "PuntoCluster": {
+        "properties": {
+          "peer_cluster": {
+            "type": "integer",
+            "title": "Peer Cluster"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "riesgo_medio": {
+            "type": "number",
+            "title": "Riesgo Medio"
+          },
+          "alertas": {
+            "type": "integer",
+            "title": "Alertas"
+          },
+          "usuarios": {
+            "type": "integer",
+            "title": "Usuarios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "peer_cluster",
+          "day",
+          "riesgo_medio",
+          "alertas",
+          "usuarios"
+        ],
+        "title": "PuntoCluster"
+      },
+      "PuntoRiesgo": {
+        "properties": {
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "risk": {
+            "type": "number",
+            "title": "Risk"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Nivel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "risk",
+          "level"
+        ],
+        "title": "PuntoRiesgo"
+      },
+      "PuntoTendencia": {
+        "properties": {
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "alertas": {
+            "type": "integer",
+            "title": "Alertas"
+          },
+          "riesgo_medio": {
+            "type": "number",
+            "title": "Riesgo Medio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "alertas",
+          "riesgo_medio"
+        ],
+        "title": "PuntoTendencia"
+      },
+      "SerieRiesgo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "peer_cluster": {
+            "type": "integer",
+            "title": "Peer Cluster"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/PuntoRiesgo"
+            },
+            "type": "array",
+            "title": "Timeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "peer_cluster",
+          "timeline"
+        ],
+        "title": "SerieRiesgo"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
