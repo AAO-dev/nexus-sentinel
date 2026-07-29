@@ -1,13 +1,20 @@
-# Datos crudos descargados de la fuente (auth.txt.gz pesa ~7 GB)
-data/raw/
+# Datos crudos descargados de la fuente (auth.txt.gz pesa ~7 GB).
+# Se versiona solo redteam.txt.gz (4.8 KB), que el notebook necesita para auditar
+# el ground truth sobre los 58 días completos del dataset original.
+data/raw/*
+!data/raw/redteam.txt.gz
 
 # Parquet de trabajo (~200 MB): se descarga desde el enlace documentado en el notebook
 data/work/auth_sample.parquet
-*.gz
 
 # Residuos de ejecución
 data/work/*.log
 data/work/.sampling_done
+
+# Resultados intermedios que el notebook regenera al ejecutarse
+docs/eda/eda_results.json
+docs/modeling/modeling_results.json
+docs/modeling/*.csv
 
 # Python
 __pycache__/
