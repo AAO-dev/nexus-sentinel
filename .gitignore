@@ -1,11 +1,13 @@
-# Datos crudos y de trabajo (nunca versionar: auth.txt.gz ~7 GB)
-data/
-*.gz
-*.parquet
+# Datos crudos descargados de la fuente (auth.txt.gz pesa ~7 GB)
+data/raw/
 
-# Artefactos serializados (se regeneran desde el notebook)
-models/*.joblib
-models/*.pkl
+# Parquet de trabajo (~200 MB): se descarga desde el enlace documentado en el notebook
+data/work/auth_sample.parquet
+*.gz
+
+# Residuos de ejecución
+data/work/*.log
+data/work/.sampling_done
 
 # Python
 __pycache__/
