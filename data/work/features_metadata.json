@@ -1,0 +1,163 @@
+{
+  "n_user_days": 47956,
+  "n_features": 61,
+  "feature_cols": [
+    "n_eventos",
+    "n_logons",
+    "n_logoffs",
+    "n_dst_computers",
+    "n_src_computers",
+    "n_fallos",
+    "n_ntlm",
+    "n_kerberos",
+    "n_tgt",
+    "n_tgs",
+    "n_auth_type_nulo",
+    "n_network",
+    "n_interactive",
+    "n_remote_interactive",
+    "n_batch_service",
+    "n_fuera_horario",
+    "n_eventos_hora_pico",
+    "n_fallos_consecutivos_max",
+    "n_uso_como_identidad_destino",
+    "ratio_fallos",
+    "ratio_ntlm",
+    "ratio_dst_por_evento",
+    "ratio_auth_type_nulo",
+    "ratio_tgs_por_tgt",
+    "amplitud_horaria",
+    "es_dia_no_laboral",
+    "historial_corto",
+    "z_n_eventos",
+    "ratio_max_n_eventos",
+    "z_n_dst_computers",
+    "ratio_max_n_dst_computers",
+    "z_n_src_computers",
+    "ratio_max_n_src_computers",
+    "z_n_fallos",
+    "ratio_max_n_fallos",
+    "z_ratio_fallos",
+    "ratio_max_ratio_fallos",
+    "z_n_ntlm",
+    "ratio_max_n_ntlm",
+    "z_ratio_ntlm",
+    "ratio_max_ratio_ntlm",
+    "z_n_fuera_horario",
+    "ratio_max_n_fuera_horario",
+    "z_amplitud_horaria",
+    "ratio_max_amplitud_horaria",
+    "z_n_tgs",
+    "ratio_max_n_tgs",
+    "z_n_uso_como_identidad_destino",
+    "ratio_max_n_uso_como_identidad_destino",
+    "primera_vez_n_ntlm",
+    "primera_vez_n_fuera_horario",
+    "primera_vez_n_fallos",
+    "n_aristas_nuevas",
+    "ratio_aristas_nuevas",
+    "rareza_media_destinos",
+    "n_src_computers_nuevas",
+    "sin_peer_group",
+    "z_peer_n_eventos",
+    "z_peer_n_dst_computers",
+    "z_peer_ratio_ntlm",
+    "z_peer_ratio_fallos"
+  ],
+  "kmeans_k": 2,
+  "silhouette_por_k": {
+    "2": {
+      "silhouette": 0.6301525378934599,
+      "min_cluster": 1375,
+      "valido": true
+    },
+    "3": {
+      "silhouette": 0.5666341941586589,
+      "min_cluster": 979,
+      "valido": true
+    },
+    "4": {
+      "silhouette": 0.5439766547547606,
+      "min_cluster": 454,
+      "valido": true
+    },
+    "5": {
+      "silhouette": 0.5526711955454829,
+      "min_cluster": 419,
+      "valido": true
+    },
+    "6": {
+      "silhouette": 0.5763062250568931,
+      "min_cluster": 113,
+      "valido": true
+    },
+    "7": {
+      "silhouette": 0.54879883861346,
+      "min_cluster": 113,
+      "valido": true
+    },
+    "8": {
+      "silhouette": 0.5186121662461456,
+      "min_cluster": 113,
+      "valido": true
+    },
+    "9": {
+      "silhouette": 0.5345948215038755,
+      "min_cluster": 56,
+      "valido": true
+    },
+    "10": {
+      "silhouette": 0.5367694564140191,
+      "min_cluster": 47,
+      "valido": true
+    }
+  },
+  "cluster_sizes": {
+    "0": 2332,
+    "1": 1375
+  },
+  "cobertura_etiquetas": {
+    "pares_redteam_distintos": 181,
+    "pares_capturados_en_tabla": 181,
+    "pares_sin_fila_usuario_dia": 0
+  },
+  "split": {
+    "split_day": 20,
+    "train": {
+      "user_days": 30455,
+      "maliciosos": 147,
+      "dias_ataque": [
+        1,
+        2,
+        5,
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15
+      ]
+    },
+    "test": {
+      "user_days": 17501,
+      "maliciosos": 34,
+      "dias_ataque": [
+        20,
+        21,
+        22,
+        26,
+        27,
+        28,
+        29
+      ]
+    }
+  },
+  "constantes": {
+    "HISTORY_WINDOW_DAYS": 30,
+    "MIN_HISTORY_DAYS": 7,
+    "SPLIT_DAY": 20,
+    "SEED": 42
+  }
+}

@@ -226,11 +226,27 @@ pip install -r requirements.txt
 ### 2 · Reproducir el análisis
 
 El notebook ofrece dos rutas: regeneración completa desde la fuente (descarga 7.2 GB, ~1-2 h) o
-carga del Parquet de trabajo ya muestreado (ruta por defecto, rápida).
+carga del Parquet de trabajo ya muestreado (ruta por defecto, rápida). **La ruta rápida descarga
+automáticamente** el conjunto de trabajo desde los archivos adjuntos de la
+[versión publicada](https://github.com/AAO-dev/nexus-sentinel/releases), de modo que el notebook
+puede ejecutarse desde un entorno limpio de Google Colab.
 
 ```bash
 jupyter notebook notebook/ueba_lanl_nexus_sentinel.ipynb
 ```
+
+**Disponibilidad de los datos y artefactos:**
+
+| Archivo | Tamaño | Dónde vive |
+|---|---|---|
+| `auth_sample.parquet` (eventos muestreados) | 200 MB | Adjunto de la *release* (lo descarga el notebook) |
+| `user_day_features.parquet` (tabla de variables) | 5.1 MB | En el repositorio |
+| `redteam.parquet` + metadatos del muestreo | < 100 KB | En el repositorio |
+| `models/*.joblib` (modelos entrenados y explicador SHAP) | 2.2 MB | En el repositorio |
+| `auth.txt.gz` (fuente original) | 7.2 GB | Se descarga de csr.lanl.gov con `src/data.py` |
+
+Gracias a esto, las fases de **modelado e inferencia se pueden re-ejecutar sin descargar nada**;
+solo las fases de adquisición y análisis exploratorio requieren el Parquet de 200 MB.
 
 También puede ejecutarse el pipeline por módulos:
 
