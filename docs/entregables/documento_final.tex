@@ -491,7 +491,28 @@ con 120 positivos), validación (días 14--19, con 27 positivos) y prueba fuera 
 con 34 positivos). El corte de validación no fue arbitrario: lo elegí con los datos, tras verificar
 que un corte en el día 16 dejaría la validación sin un solo positivo. Todo lo que requiere decidir
 ---hiperparámetros, calibrador, modelo ganador y umbrales--- lo decidí en validación; el conjunto de
-prueba lo reservé para una única evaluación final.
+prueba lo reservé para una única evaluación final. El cuadro \ref{tab:conjuntos} resume la partición.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{lcrrr}
+\toprule
+\textbf{Conjunto} & \textbf{Días} & \textbf{Usuario-días} & \textbf{\% del total} & \textbf{Positivos} \\
+\midrule
+Entrenamiento & 0--13 & 22\,308 & 46.5\,\% & 120 \\
+Validación & 14--19 & 8\,147 & 17.0\,\% & 27 \\
+Prueba (fuera de tiempo) & 20--29 & 17\,501 & 36.5\,\% & 34 \\
+\midrule
+Total & 0--29 & 47\,956 & 100\,\% & 181 \\
+\bottomrule
+\end{tabular}
+\caption{Partición temporal en tres conjuntos cronológicamente disjuntos. Las proporciones no son
+un porcentaje elegido de antemano: al cortar por día calendario, las dicta el volumen de actividad
+de cada día y la restricción de que la validación contenga positivos suficientes para medir PR-AUC.}
+\label{tab:conjuntos}
+\end{table}
 
 \subsection{Modelos no supervisados}
 
