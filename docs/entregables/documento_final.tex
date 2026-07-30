@@ -158,27 +158,37 @@ volumen masivo de datos (más de mil millones de eventos), datos desidentificado
 necesidad de que el resultado sea \textit{explicable}, pues ninguna acción sobre una cuenta o una
 persona puede tomarse a ciegas.
 
-\subsection{Empresa y contexto de negocio}
+\subsection{La empresa y su propuesta de valor}
 
-Enmarqué el proyecto en \textbf{Nexus Sentinel}, una empresa ficticia de tecnología de tamaño medio
-que sufrió un incidente representativo del problema: la cuenta de uno de sus ingenieros fue utilizada
-durante semanas para explorar servidores a los que ese ingeniero jamás accedía. Ninguna alerta se
-disparó, porque cada autenticación individual era «válida». El incidente se detectó tarde y de forma
-casi accidental. Este caso ficticio ---que, como mostraré en la presentación, tiene equivalentes
-reales y costosos en la industria--- define con precisión el problema que mi sistema busca resolver:
-no vigilar eventos individuales, sino la \textbf{desviación del patrón de comportamiento}.
+\textbf{Nexus Sentinel} es la empresa ficticia de analítica de seguridad que constituí para este
+proyecto. Su producto es precisamente el sistema que documento aquí: una capa de inteligencia que
+las organizaciones incorporan sobre su infraestructura de seguridad existente para detectar el uso
+indebido de credenciales legítimas.
+
+El escenario que Nexus Sentinel resuelve es el siguiente. Una empresa cliente sufre un incidente en
+el que la cuenta de uno de sus ingenieros es utilizada durante semanas para explorar servidores a
+los que ese ingeniero jamás accedía. Ninguna alerta se dispara, porque cada autenticación individual
+es «válida», y el incidente se detecta tarde y de forma casi accidental. Como muestro en la
+presentación del proyecto, este escenario tiene equivalentes reales y costosísimos en la industria
+---el caso más conocido es el de Target en 2013, donde la credencial robada a un proveedor externo
+condujo a una brecha de más de 200 millones de dólares.
+
+Ese es el problema que Nexus Sentinel ataca: no vigilar eventos individuales, sino la
+\textbf{desviación del patrón de comportamiento} de cada cuenta. En este documento desarrollo el
+producto de principio a fin, validándolo sobre datos reales de una red corporativa.
 
 \subsection{Flujo de trabajo}
 
-El desarrollo que documento comprende ocho fases: (1) adquisición y muestreo justificado de los datos
-crudos; (2) análisis exploratorio orientado a descubrir empíricamente las señales de compromiso;
-(3) ingeniería de variables en cuatro niveles de desviación; (4) modelado supervisado y no supervisado
-con evaluación y análisis de estabilidad; (5) construcción del \textit{pipeline} de inferencia y la
-puntuación de riesgo; (6) exposición de los modelos mediante una API; (7) desarrollo de una interfaz
-web con un asistente conversacional; y (8) la redacción de este documento. Cada fase la cerré con una
-verificación explícita, y varias de ellas revelaron conflictos técnicos y metodológicos que
-documento con transparencia, pues considero que la forma en que los resolví es parte sustancial del
-valor del trabajo.
+El desarrollo comprende siete etapas encadenadas: la adquisición y el muestreo justificado de los
+datos crudos; un análisis exploratorio orientado a descubrir empíricamente las señales de compromiso;
+la ingeniería de variables en cuatro niveles de desviación; el modelado supervisado y no supervisado
+con su evaluación y análisis de estabilidad; la construcción del flujo de inferencia y la puntuación
+de riesgo; la exposición de los modelos mediante una API; y el desarrollo de una interfaz web con un
+asistente conversacional.
+
+Cerré cada etapa con una verificación explícita, y varias de ellas revelaron conflictos técnicos y
+metodológicos que documento con transparencia, pues considero que la forma en que los resolví es
+parte sustancial del valor del trabajo.
 
 % ────────────────────────────────────────────────────────────────────────────
 \section{Planteamiento del problema}
@@ -737,35 +747,170 @@ servidor y nunca se expone al navegador.
 
 Este proyecto me permitió recorrer el ciclo completo de un problema de ciencia de datos aplicado a un
 dominio real y difícil, desde mil millones de eventos crudos hasta una interfaz funcional en
-producción. Extraigo varias conclusiones.
+producción. Organizo las conclusiones en tres planos: los hallazgos del análisis, el impacto para la
+toma de decisiones y la justificación de las decisiones metodológicas de fondo.
 
-En lo metodológico, confirmé que la elección del aprendizaje supervisado está sólidamente justificada
-para este problema: dado que dispongo de etiquetas verificadas del \textit{red team}, puedo optimizar
+\subsection{Hallazgos sobre el problema}
+
+El hallazgo que considero más relevante, y que atraviesa todo el trabajo, es que la señal del uso
+indebido de credenciales vive en la \textbf{desviación} y en la \textbf{novedad de conexiones}, no en
+el volumen de actividad. El análisis SHAP lo confirmó de manera independiente: las variables
+dominantes son el protocolo anómalo y las máquinas nuevas, no cuántos eventos genera el usuario. El
+caso que analicé en detalle lo resume con precisión: el día del ataque, el volumen de esa cuenta
+estaba dentro de lo normal (0.69 desviaciones estándar respecto a su propia media) mientras su
+alcance estaba a 7.7 desviaciones. Un detector basado en volumen no habría visto nada.
+
+Este resultado valida el diseño multinivel de la ingeniería de variables y, sobre todo, valida la
+premisa de negocio: un sistema que vigile umbrales absolutos de actividad fracasará frente a un
+atacante que opera dentro de una cuenta legítima.
+
+\subsection{Hallazgos sobre los datos}
+
+Tres resultados empíricos que no anticipaba al comenzar y que documento porque cambiaron decisiones
+concretas del proyecto:
+
+\begin{enumerate}[leftmargin=1.5cm]
+  \item \textbf{El ritmo humano de la red puede recuperarse de tiempos completamente anónimos.}
+        Únicamente a partir de la periodicidad de los datos inferí el horario laboral (7:00--16:00)
+        y los fines de semana, sin ningún calendario externo. Un matiz metodológico importante:
+        existe una base de automatización 24/7 corriendo bajo cuentas de usuario, de modo que el
+        umbral correcto es el punto medio entre valle y pico; usar un porcentaje del pico habría
+        clasificado el día entero como laboral.
+  \item \textbf{El compromiso no se parece a la fuerza bruta.} Los días comprometidos presentan
+        fallos con más frecuencia (50\% de los días frente a 24\%) pero en proporción mínima (ratio
+        típico de 0.003), porque quien usa credenciales válidas robadas avanza con éxito. El fallo
+        masivo pertenece a la población normal: el 17\% de los usuario-días normales son 100\%
+        fallos, la firma de automatización con credenciales caducas. A nivel de evento, el
+        \textit{red team} autenticó con éxito el 99.9\% de las veces. Esta observación invirtió mi
+        expectativa inicial y obligó a contextualizar la variable de fallos contra el historial del
+        propio usuario en lugar de usarla en crudo.
+  \item \textbf{La variable de identidad destino resultó de las más discriminantes.} El número de
+        veces que una cuenta aparece como identidad \textit{destino} de otra ---que añadí casi por
+        completitud--- separa las clases con una mediana de 20 frente a 0. Es la firma de las cadenas
+        de saltos entre máquinas.
+\end{enumerate}
+
+\subsection{Impacto para la toma de decisiones}
+
+El valor del sistema no reside en una métrica sino en la curva que traduce el modelo a capacidad
+operativa. La Tabla~\ref{tab:negocio} resume esa traducción.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{cc}
+\toprule
+\textbf{Presupuesto de alertas diarias} & \textbf{Cobertura de cuentas comprometidas} \\
+\midrule
+20 alertas / día  & 31\% \\
+30 alertas / día  & 38\% \\
+50 alertas / día  & 38\% \\
+100 alertas / día & \textbf{85\%} \\
+\bottomrule
+\end{tabular}
+\caption{Traducción del desempeño estadístico a capacidad operativa. Permite a un responsable de
+seguridad elegir su punto de operación en función del equipo disponible.}
+\label{tab:negocio}
+\end{table}
+
+Esta tabla convierte una pregunta técnica ---«¿qué tan bueno es el modelo?»--- en una que una
+dirección puede responder: \textbf{«¿cuántos analistas cuesta cada punto de cobertura?»}. En lugar de
+imponer un umbral, el sistema permite elegir el punto de operación según los recursos reales.
+
+También es necesario ser explícito sobre el costo. Al umbral naranja la precisión es baja: 13
+aciertos frente a 280 falsos positivos. Presentado de forma aislada el dato suena descalificador,
+pero el marco correcto es otro: el sistema reduce 17\,501 usuario-días a 212 casos revisables, y
+dentro de esa lista corta el analista descarta con rapidez gracias al semáforo y la explicación. Es
+una herramienta de \textbf{priorización}, no de bloqueo automático, y por eso ninguna acción sobre
+una cuenta ocurre sin decisión humana.
+
+Conviene subrayar además el encaje del producto: Nexus Sentinel no compite con el SIEM ni con el
+EDR, sino que consume sus registros y devuelve priorización explicada. Es exactamente la capa que
+faltaba en incidentes como el de Target, donde las alertas técnicas existían pero se perdieron entre
+el ruido porque nadie podía distinguir cuáles merecían atención.
+
+\subsection{Justificación del enfoque supervisado}
+
+La elección del aprendizaje supervisado como componente central está sólidamente justificada para
+este problema. Dado que dispongo de etiquetas verificadas del \textit{red team}, puedo optimizar
 directamente la función objetivo del negocio y medir el desempeño de forma objetiva, algo que un
 enfoque puramente no supervisado ---que solo identificaría desviaciones estadísticas sin distinguir
-fraude genuino de comportamiento legítimo atípico--- no permitiría. No obstante, integré ambos
-paradigmas: el modelo no supervisado aporta la línea base y, vía el agrupamiento de pares, genera las
-variables de desviación grupal que resultaron valiosas.
+compromiso genuino de comportamiento legítimo atípico--- no permitiría.
 
-En lo técnico, el hallazgo que considero más relevante es que la señal del uso indebido de
-credenciales vive en la \textbf{desviación} y en la \textbf{novedad de conexiones}, no en el volumen
-crudo, tal como confirmó el análisis SHAP. La ingeniería de variables en cuatro niveles ---y en
-particular la regla anti-fuga que la sostiene--- es, en mi valoración, la contribución técnica central
-del trabajo.
+No obstante, integré ambos paradigmas y ambos aportaron. El Isolation Forest actúa como línea base
+que contextualiza el desempeño del modelo central, y el agrupamiento de pares cumple un doble papel:
+genera las variables de desviación grupal ---que resultaron valiosas en el análisis SHAP--- y, como
+puntuación de anomalía por distancia al centroide, superó a la línea base con un modelo mucho más
+simple (PR-AUC de 0.093 frente a 0.027).
 
-En cuanto a los resultados, fui deliberadamente honesto: son modestos en términos absolutos (un
-PR-AUC de prueba de 0.056) pero representan una discriminación real y estable, muy por encima del
-azar, sobre un problema con solo 181 eventos de compromiso y un desbalance extremo. La curva de
-alertas por día frente a recall demuestra que, aun con estas métricas, el sistema aporta valor
-operativo: reduce el pajar a una lista corta y priorizada. La utilidad plena se consolidaría con la
-línea de trabajo futuro más prometedora ---y la única que añadiría señal genuina en lugar de reordenar
-la existente--- que es el enriquecimiento con fuentes de datos adicionales del propio conjunto de LANL
-(procesos y flujos de red), contempladas como opcionales en el diseño original.
+\subsection{Sobre el rigor metodológico}
 
-Finalmente, valoro que los conflictos que enfrenté ---el \textit{data fence} en la adquisición, el
-agrupamiento degenerado y, sobre todo, la autocorrección de la fuga metodológica--- no fueron
-obstáculos que ocultar, sino oportunidades para demostrar el rigor con el que abordé el proyecto. La
-forma en que un sistema falla y se corrige dice tanto de su calidad como sus métricas.
+Valoro especialmente que los conflictos que enfrenté ---el \textit{data fence} en la adquisición, el
+agrupamiento degenerado y, sobre todo, la autocorrección de la fuga metodológica--- no fueran
+obstáculos que ocultar, sino oportunidades para demostrar el rigor con el que abordé el trabajo.
+
+Si tuviera que quedarme con una sola idea del proyecto, sería que \textbf{la honestidad metodológica
+es parte del resultado}. Documenté el agrupamiento que tuve que corregir, la fuga que yo mismo
+introduje y detecté, las tres palancas de mejora que no funcionaron y la tasa de falsos positivos sin
+filtrar. Un modelo con métricas modestas pero verificables y estables vale más que uno con números
+vistosos que no resistirían escrutinio; y en seguridad, donde las decisiones afectan a personas, esa
+diferencia es la que importa.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Limitaciones y recomendaciones}
+
+\subsection{Limitaciones del trabajo}
+
+Prefiero enunciarlas explícitamente antes que dejar que las descubra quien evalúe el proyecto:
+
+\begin{itemize}[leftmargin=1.5cm]
+  \item \textbf{El volumen de positivos marca el techo.} Con 181 eventos de compromiso en todo el
+        conjunto (120, 27 y 34 por partición), el margen estadístico es estrecho. Probé tres palancas
+        de mejora y ninguna sobrevivió a una selección honesta en validación.
+  \item \textbf{Dos variables derivan entre campañas.} Las desviaciones de fallos y de NTLM respecto
+        a los pares presentan un índice de estabilidad alto, porque dependen de \textit{cómo} ataca
+        el equipo ofensivo en cada campaña. La puntuación agregada se mantiene estable, pero esas dos
+        variables requerirían monitoreo en un despliegue real.
+  \item \textbf{La fuente tiene un sesgo conocido.} El conjunto solo incluye fallos de autenticación
+        de usuarios que tuvieron al menos un éxito, de modo que los ataques de adivinación contra
+        cuentas inexistentes quedan fuera del alcance por construcción. No es corregible: son
+        registros que no existen.
+  \item \textbf{El ROC-AUC de 0.939 es engañoso} con este desbalance, razón por la cual lo reporto
+        siempre acompañado de la curva de precisión-recall.
+  \item \textbf{La inferencia opera sobre variables precomputadas}, no sobre eventos crudos en
+        caliente. La reconstrucción completa desde eventos reutilizaría los mismos módulos, pero
+        requeriría transmitir el estado histórico de cada usuario.
+\end{itemize}
+
+\subsection{Recomendaciones y trabajo futuro}
+
+Ordeno las líneas de continuación por la relación entre impacto esperado y esfuerzo requerido:
+
+\begin{enumerate}[leftmargin=1.5cm]
+  \item \textbf{Enriquecer con fuentes de datos adicionales.} Es la única palanca que añadiría
+        \textit{señal nueva} en lugar de reordenar la existente, y por eso la sitúo en primer lugar.
+        El propio conjunto de LANL incluye eventos de procesos y flujos de red que no utilicé. Un
+        proceso inusual ejecutándose en una máquina recién alcanzada constituye evidencia
+        independiente del movimiento lateral, y combinarla con la novedad de grafo debería mejorar la
+        precisión justamente donde más importa: en la cabeza de la cola de triaje.
+  \item \textbf{Cerrar el ciclo de retroalimentación.} La interfaz ya registra las decisiones del
+        analista (falso positivo, investigar, escalar). Con suficientes decisiones acumuladas, esas
+        etiquetas humanas permitirían reentrenar el modelo sobre lo que el equipo considera realmente
+        relevante, que no siempre coincide con la definición del \textit{red team}.
+  \item \textbf{Recalibrar los umbrales periódicamente.} Observé que el volumen de alertas se
+        desplaza ligeramente entre periodos. En operación, los percentiles deberían recalcularse
+        sobre una ventana móvil reciente en lugar de quedar fijos, de modo que la carga diaria se
+        mantenga dentro de la capacidad del equipo.
+  \item \textbf{Convertir el análisis de estabilidad en monitoreo continuo.} Los índices PSI y CSI
+        que calculé no deberían ser un ejercicio único: automatizados, permitirían detectar cuándo el
+        modelo necesita reentrenarse porque el comportamiento de la red cambió.
+  \item \textbf{Explorar modelos de secuencia.} La unidad usuario-día resume una jornada completa en
+        una fila. Modelos que traten la secuencia de eventos dentro del día podrían capturar el
+        \textit{orden} del movimiento lateral, no solo su magnitud. Lo sitúo al final
+        deliberadamente: con 181 positivos, un modelo de mayor capacidad probablemente sobreajustaría,
+        de modo que esta línea solo tiene sentido después de ejecutar la primera.
+\end{enumerate}
 
 % ────────────────────────────────────────────────────────────────────────────
 \section{Referencias}

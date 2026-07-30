@@ -95,7 +95,7 @@ export interface paths {
          * Employee Explanation
          * @description Top-5 SHAP del día, con el valor del usuario vs. su promedio personal y vs. su peer group.
          *
-         *     Solo hay explicación para días con alerta: los verdes son registro pasivo (sección 1 del plan).
+         *     Solo hay explicación para días con alerta: los verdes son registro pasivo.
          */
         get: operations["employee_explanation_employees__employee_id__explanation_get"];
         put?: never;
@@ -135,9 +135,9 @@ export interface paths {
         };
         /**
          * Case Feedback History
-         * @description Historial de decisiones del analista sobre un caso (vista 2 del plan).
+         * @description Historial de decisiones del analista sobre un caso.
          *
-         *     Cierra la trazabilidad que exige el perfil de Cumplimiento (sección 1.2): toda decisión sobre
+         *     Cierra la trazabilidad que exige un perfil de cumplimiento: toda decisión sobre
          *     una cuenta queda registrada y es consultable.
          */
         get: operations["case_feedback_history_cases__case_id__feedback_get"];
@@ -147,8 +147,8 @@ export interface paths {
          * @description Registra la decisión del analista (falso positivo / investigar / escalar).
          *
          *     Cierra el ciclo human-in-the-loop: ninguna acción sobre la cuenta es automática, y la decisión
-         *     queda trazada para auditoría (sección 1.2, perfil de Cumplimiento).
-         *     Nota de despliegue: en HF Spaces / Render free el almacenamiento es efímero.
+         *     queda trazada para auditoría.
+         *     Nota de despliegue: en planes gratuitos el almacenamiento es efímero.
          */
         post: operations["case_feedback_cases__case_id__feedback_post"];
         delete?: never;
@@ -188,8 +188,8 @@ export interface paths {
         put?: never;
         /**
          * Assistant Chat
-         * @description Asistente conversacional (requerimiento del profesor): guía al usuario y responde preguntas
-         *     sobre los datos consultando el modelo vía function calling (DeepSeek).
+         * @description Asistente conversacional: guía al usuario y responde preguntas sobre los datos
+         *     consultando el modelo mediante function calling (DeepSeek).
          *
          *     La API key vive solo en el backend. Sin ella, degrada con 503 explícito.
          */
@@ -211,7 +211,7 @@ export interface paths {
         put?: never;
         /**
          * Inference Score
-         * @description Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo (sección 6.2 del plan).
+         * @description Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo.
          *
          *     Demuestra el flujo completo frente al snapshot precomputado. Requiere los artefactos
          *     serializados; si no están presentes responde 503 en lugar de fallar de forma opaca.
@@ -298,7 +298,7 @@ export interface components {
         Decision: "falso_positivo" | "investigar" | "escalar";
         /**
          * EgoGraph
-         * @description Nodos del mini-grafo usuario→computadoras (elemento visual diferenciador, vista 2).
+         * @description Nodos del mini-grafo usuario→computadoras que dibuja la vista de investigación.
          */
         EgoGraph: {
             /**

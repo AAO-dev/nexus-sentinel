@@ -1,17 +1,18 @@
-"""Nexus Sentinel — API de consumo de modelos (Fase 6, sección 7 del plan).
+"""Nexus Sentinel — API de consumo de modelos.
 
-Responsabilidad del backend (división de la sección 8.0): es el dueño de TODO el conocimiento de
+Responsabilidad del backend: es el dueño de TODO el conocimiento de
 ML — puntuaciones, niveles, umbrales y explicaciones SHAP — y lo expone por un contrato OpenAPI
 tipado. El frontend consume y presenta; jamás recalcula riesgo.
 
-Estrategia de servicio (sección 6.2 del plan):
+Estrategia de servicio:
 - Los 6 endpoints de lectura sirven el **snapshot precomputado** del periodo de prueba
   (`docs/demo/snapshot.json`): estable y rápido para la demo en vivo, sin dependencia de modelos
   en memoria.
 - `POST /inference/score` ejecuta **inferencia real** sobre un usuario-día para demostrar el flujo
   completo. Carga los artefactos de forma perezosa; si no están disponibles (despliegue ligero),
   responde 503 con un mensaje explícito en lugar de fallar de forma opaca.
-- `POST /cases/{id}/feedback` cierra el ciclo human-in-the-loop (principio de diseño nº 3).
+- `POST /cases/{id}/feedback` cierra el ciclo human-in-the-loop: el analista decide, el sistema
+  solo registra.
 
 Ejecutar en local:  uvicorn api.main:app --reload    → OpenAPI en /docs
 """
@@ -59,7 +60,7 @@ def _load_snapshot() -> dict:
     if not SNAPSHOT_PATH.exists():
         raise RuntimeError(
             f"No se encontró el snapshot en {SNAPSHOT_PATH}. Genéralo con "
-            "`python -m src.inference` (Fase 5) o define SNAPSHOT_PATH."
+            "`python -m src.inference` o define SNAPSHOT_PATH."
         )
     return json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
 
@@ -192,7 +193,7 @@ class Explicacion(BaseModel):
 
 
 class EgoGraph(BaseModel):
-    """Nodos del mini-grafo usuario→computadoras (elemento visual diferenciador, vista 2)."""
+    """Nodos del mini-grafo usuario→computadoras que dibuja la vista de investigación."""
     nodos_nuevos: list[str] = Field(..., description="Destinos tocados por primera vez (en rojo)")
     nodos_conocidos: list[str] = Field(..., description="Destinos ya conocidos (en gris)")
     n_nuevos: int
@@ -318,7 +319,7 @@ def employee_risk(employee_id: str, days: int = Query(30, ge=1, le=60)) -> Serie
 def employee_explanation(employee_id: str, date: int) -> Explicacion:
     """Top-5 SHAP del día, con el valor del usuario vs. su promedio personal y vs. su peer group.
 
-    Solo hay explicación para días con alerta: los verdes son registro pasivo (sección 1 del plan).
+    Solo hay explicación para días con alerta: los verdes son registro pasivo.
     """
     detail = _get_employee(employee_id)
     dia = _get_day(detail, date)
@@ -349,8 +350,8 @@ def case_feedback(case_id: str, body: FeedbackIn) -> FeedbackOut:
     """Registra la decisión del analista (falso positivo / investigar / escalar).
 
     Cierra el ciclo human-in-the-loop: ninguna acción sobre la cuenta es automática, y la decisión
-    queda trazada para auditoría (sección 1.2, perfil de Cumplimiento).
-    Nota de despliegue: en HF Spaces / Render free el almacenamiento es efímero.
+    queda trazada para auditoría.
+    Nota de despliegue: en planes gratuitos el almacenamiento es efímero.
     """
     registro = {"case_id": case_id, **body.model_dump(),
                 "timestamp": datetime.now(timezone.utc).isoformat()}
@@ -363,9 +364,9 @@ def case_feedback(case_id: str, body: FeedbackIn) -> FeedbackOut:
 
 @app.get("/cases/{case_id}/feedback", response_model=list[FeedbackRegistro], tags=["triage"])
 def case_feedback_history(case_id: str) -> list[FeedbackRegistro]:
-    """Historial de decisiones del analista sobre un caso (vista 2 del plan).
+    """Historial de decisiones del analista sobre un caso.
 
-    Cierra la trazabilidad que exige el perfil de Cumplimiento (sección 1.2): toda decisión sobre
+    Cierra la trazabilidad que exige un perfil de cumplimiento: toda decisión sobre
     una cuenta queda registrada y es consultable.
     """
     if not FEEDBACK_PATH.exists():
@@ -393,8 +394,8 @@ def assistant_health() -> dict:
 
 @app.post("/assistant/chat", response_model=ChatOut, tags=["asistente"])
 def assistant_chat(body: ChatIn) -> ChatOut:
-    """Asistente conversacional (requerimiento del profesor): guía al usuario y responde preguntas
-    sobre los datos consultando el modelo vía function calling (DeepSeek).
+    """Asistente conversacional: guía al usuario y responde preguntas sobre los datos
+    consultando el modelo mediante function calling (DeepSeek).
 
     La API key vive solo en el backend. Sin ella, degrada con 503 explícito.
     """
@@ -417,7 +418,7 @@ def assistant_chat(body: ChatIn) -> ChatOut:
 
 @app.post("/inference/score", response_model=InferenciaOut, tags=["inferencia"])
 def inference_score(body: InferenciaIn) -> InferenciaOut:
-    """Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo (sección 6.2 del plan).
+    """Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo.
 
     Demuestra el flujo completo frente al snapshot precomputado. Requiere los artefactos
     serializados; si no están presentes responde 503 en lugar de fallar de forma opaca.

@@ -1,5 +1,5 @@
 /**
- * Vista 2 — Investigación (`/employee/:id`, sección 8.2 del plan).
+ * Vista 2 — Investigación (`/employee/:id`).
  *
  * Lo que resuelve: cuando el analista decide profundizar, necesita ver la actividad del día, cómo
  * se compara contra su línea base personal y contra su peer group, y sobre todo el mini-grafo ego

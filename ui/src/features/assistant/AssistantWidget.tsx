@@ -1,8 +1,8 @@
 /**
- * Asistente conversacional flotante (requerimiento del profesor).
+ * Asistente conversacional flotante.
  *
- * Adapta la técnica de function calling de los notebooks del profesor: el usuario pregunta en
- * lenguaje natural y el backend (DeepSeek) responde consultando los datos reales del modelo. Sirve
+ * El usuario pregunta en lenguaje natural y el backend (DeepSeek) responde consultando los datos
+ * reales del modelo mediante function calling. Sirve
  * de guía (qué es el riesgo, cómo investigar) y de consulta (cuántas alertas, por qué se marcó a X).
  *
  * La API key vive solo en el backend; este widget solo habla con /assistant/chat.

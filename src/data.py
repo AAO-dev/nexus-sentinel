@@ -1,11 +1,11 @@
-"""Adquisición y muestreo del dataset LANL (Fase 1, secciones 2.2-2.3 del plan).
+"""Adquisición y muestreo del dataset LANL.
 
 Responsabilidades:
 - Descarga en streaming de auth.txt.gz (7.2 GB) y redteam.txt.gz (4.8 KB) desde csr.lanl.gov,
   documentando fecha, URL y tamaños. Nota: desde 2026 el sitio antepone un "data fence"
   (email + uso declarado) que devuelve un token de descarga; ver request_download_token().
 - Lectura por chunks con pandas (compression='gzip', chunksize=...) sin descomprimir a disco.
-- Muestreo documentado (sección 2.3): ventana de los primeros 30 días, TODOS los usuarios de
+- Muestreo documentado: ventana de los primeros 30 días, TODOS los usuarios de
   redteam.txt + muestra estratificada por actividad de usuarios normales (semilla fija),
   excluyendo cuentas de sistema y de máquina del universo muestreable.
 - Persistencia del dataset de trabajo en Parquet + metadata JSON con todos los conteos
@@ -59,7 +59,7 @@ PUBLISHED = {
 
 
 def is_system_account(user: str) -> bool:
-    """Criterio de exclusión (sección 2.3): cuentas de sistema y de máquina.
+    """Criterio de exclusión: cuentas de sistema y de máquina.
 
     - Cuentas de máquina: la parte local termina en '$' (ej. 'C625$@DOM1').
     - Cuentas de sistema bien conocidas no desidentificadas: SYSTEM, Local Service,
@@ -91,7 +91,7 @@ def download_streaming(filename: str, dest_dir: str | Path, token: str) -> Path:
     """Descarga un archivo del dataset en streaming (chunks de 1 MB) y documenta la descarga.
 
     Escribe {filename}.download.json junto al archivo con URL, fecha UTC, tamaño y duración,
-    para citarlo en el notebook y el documento (sección 2.2 del plan).
+    para poder citar la procedencia de los datos en el notebook y el documento.
     """
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -126,7 +126,7 @@ def read_auth_chunks(path: str | Path, chunk_size: int = CHUNK_SIZE, usecols: li
     """Itera auth.txt.gz por chunks sin descomprimir a disco.
 
     El dataset usa '?' como marcador de campo sin valor; se preserva como string para que
-    los conteos de nulos del EDA sean explícitos (los nulos también informan, sección 4.2).
+    los conteos de nulos del EDA sean explícitos: el patrón de ausencias también informa.
     """
     return pd.read_csv(
         path,
@@ -144,7 +144,7 @@ def read_auth_chunks(path: str | Path, chunk_size: int = CHUNK_SIZE, usecols: li
 def load_redteam(path: str | Path) -> pd.DataFrame:
     """Carga redteam.txt.gz completo (KB), deduplica y añade la columna day.
 
-    El plan documenta 12 líneas duplicadas conocidas; se eliminan aquí y el conteo
+    El archivo trae 12 líneas duplicadas conocidas; se eliminan aquí y el conteo
     queda registrado en la metadata del muestreo.
     """
     df = pd.read_csv(
@@ -157,7 +157,7 @@ def load_redteam(path: str | Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Muestreo (sección 2.3)
+# Muestreo
 # ---------------------------------------------------------------------------
 
 def scan_auth(auth_path: str | Path, max_day: int = SAMPLE_WINDOW_DAYS) -> dict:
@@ -197,7 +197,7 @@ def sample_users(
     n_normal: int = N_NORMAL_USERS,
     seed: int = SEED,
 ) -> dict:
-    """Selecciona los usuarios del dataset de trabajo (sección 2.3).
+    """Selecciona los usuarios del dataset de trabajo.
 
     - TODOS los usuarios que aparecen en redteam.txt (cuentas comprometidas).
     - Muestra aleatoria de n_normal usuarios humanos normales, estratificada por nivel de
@@ -279,7 +279,7 @@ def build_working_sample(
     n_normal: int = N_NORMAL_USERS,
     seed: int = SEED,
 ) -> dict:
-    """Orquesta el muestreo completo (sección 2.3) y persiste el dataset de trabajo.
+    """Orquesta el muestreo completo y persiste el dataset de trabajo.
 
     Salidas en out_dir:
     - auth_sample.parquet  : eventos de auth de la ventana para los usuarios muestreados.
@@ -346,7 +346,7 @@ def build_working_sample(
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Fase 1: descarga y muestreo del dataset LANL")
+    parser = argparse.ArgumentParser(description="Descarga y muestreo del dataset LANL")
     parser.add_argument("--email", help="email para el data fence de LANL")
     parser.add_argument("--usage", help="uso declarado de los datos")
     parser.add_argument("--raw-dir", default="data/raw")

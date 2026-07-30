@@ -1,5 +1,5 @@
 /**
- * Vista 1 — Consola de triage (`/triage`, sección 8.2 del plan).
+ * Vista 1 — Consola de triage (`/triage`).
  *
  * Lo que resuelve: el analista SOC Tier 2 no necesita más alertas, necesita una cola corta,
  * priorizada y explicada. Aquí ve los KPIs, la cola ordenada por riesgo con el motivo en una línea,

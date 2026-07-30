@@ -1,5 +1,5 @@
 /**
- * Vista 3 — Panel ejecutivo (`/executive`, sección 8.2 del plan).
+ * Vista 3 — Panel ejecutivo (`/executive`).
  *
  * Lo que resuelve: el CISO no hace triage; necesita tendencia de riesgo organizacional, qué rol
  * conductual concentra el riesgo, las cuentas de riesgo sostenido y la eficiencia del SOC para

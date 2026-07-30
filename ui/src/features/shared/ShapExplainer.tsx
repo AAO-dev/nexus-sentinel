@@ -1,7 +1,7 @@
 /**
  * Explicación SHAP del usuario-día.
  *
- * Principio de diseño nº 1 del plan: ninguna puntuación sin explicación. Cada contribución se
+ * Invariante del sistema: ninguna puntuación se muestra sin su explicación. Cada contribución se
  * muestra con su magnitud relativa y —lo que realmente permite decidir al analista— el valor del
  * día frente a su propio promedio histórico y al de su peer group conductual.
  */

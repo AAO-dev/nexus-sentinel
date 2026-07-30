@@ -1,8 +1,8 @@
-"""Pruebas de contrato de la API (Fase 6).
+"""Pruebas de contrato de la API.
 
-Definición de "listo" del backend (sección 8.0 del plan): estos tests en verde contra el snapshot
+Definición de "listo" del backend: estos tests en verde contra el snapshot
 de demo. Verifican el CONTRATO que el frontend React consumirá — códigos de estado, forma de la
-respuesta e invariantes de negocio — no la calidad del modelo (eso es la Fase 4).
+respuesta e invariantes de negocio — no la calidad del modelo, que se evalúa en el notebook.
 
 Ejecutar:  pytest api/tests -q
 """
@@ -70,7 +70,7 @@ def test_employees_ordenada_por_riesgo_desc():
     assert len(items) <= 30 and len(items) > 0
     riesgos = [e["risk_max"] for e in items]
     assert riesgos == sorted(riesgos, reverse=True), "la cola debe venir priorizada"
-    assert all(e["id"].startswith("U-") for e in items), "IDs anonimizados (sección 8.3)"
+    assert all(e["id"].startswith("U-") for e in items), "los IDs deben venir anonimizados"
     assert all(e["motivo"] for e in items), "ninguna entrada sin motivo legible"
 
 
@@ -105,11 +105,11 @@ def test_explanation_trae_shap_con_comparativas(dia_de_alerta):
     b = client.get(f"/employees/{eid}/explanation", params={"date": dia}).json()
     assert b["level"] in {"naranja", "rojo"} and b["motivo"]
     assert 1 <= len(b["top_shap"]) <= 5
-    # el contrato del plan: valor del día + comparación personal y de pares
+    # el contrato exige: valor del día + comparación personal y de pares
     for s in b["top_shap"]:
         assert {"feature", "label", "contribucion", "valor"} <= set(s)
         assert "promedio_personal" in s and "promedio_peer" in s
-    # principio de diseño nº 1: la puntuación nunca viaja sin explicación
+    # invariante del sistema: la puntuación nunca viaja sin explicación
     assert b["risk"] > 0 and len(b["top_shap"]) > 0
 
 
@@ -153,7 +153,7 @@ def test_feedback_rechaza_decision_invalida():
 
 
 def test_historial_de_feedback_es_consultable(tmp_path, monkeypatch):
-    """Trazabilidad para Cumplimiento (sección 1.2): lo registrado debe poder leerse."""
+    """Trazabilidad para auditoría: lo que se registra debe poder leerse después."""
     destino = tmp_path / "feedback.jsonl"
     monkeypatch.setattr("api.main.FEEDBACK_PATH", destino)
     caso = "U-0001-d21"
@@ -175,7 +175,7 @@ def test_historial_vacio_no_falla(tmp_path, monkeypatch):
 # --------------------------------------------------------------------------- datos para vistas 2 y 3
 
 def test_activity_incluye_grafo_ego(dia_de_alerta):
-    """El mini-grafo es el elemento visual diferenciador del proyecto (vista 2)."""
+    """El mini-grafo alimenta la vista de investigación: sin nodos no se puede dibujar."""
     eid, dia = dia_de_alerta
     b = client.get(f"/employees/{eid}/activity", params={"date": dia}).json()
     ego = b["ego_graph"]
@@ -188,7 +188,7 @@ def test_activity_incluye_grafo_ego(dia_de_alerta):
 
 def test_overview_trae_datos_de_la_vista_ejecutiva():
     b = client.get("/overview").json()
-    assert len(b["tendencia_por_cluster"]) > 0, "vista 3: tendencia por rol conductual"
+    assert len(b["tendencia_por_cluster"]) > 0, "el panel ejecutivo necesita la tendencia por rol"
     assert all({"peer_cluster", "day", "riesgo_medio"} <= set(p) for p in b["tendencia_por_cluster"])
 
     k = b["kpis_soc"]

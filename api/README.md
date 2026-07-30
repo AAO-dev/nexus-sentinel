@@ -1,8 +1,8 @@
-# API — Nexus Sentinel (Fase 6)
+# API — Nexus Sentinel
 
 Backend FastAPI que expone la cola de triage priorizada y explicada. Es el **dueño de todo el
 conocimiento de ML** (puntuaciones, niveles, umbrales, SHAP); el frontend React consume y presenta,
-nunca recalcula (división de responsabilidades, sección 8.0 del plan).
+nunca recalcula: es la separación de responsabilidades que gobierna todo el sistema.
 
 ## Contrato (7 endpoints + inferencia en vivo)
 
@@ -22,11 +22,11 @@ nunca recalcula (división de responsabilidades, sección 8.0 del plan).
 
 ### Asistente conversacional
 
-`POST /assistant/chat` implementa el asistente (requerimiento del profesor) adaptando la técnica de
-**function calling** de sus notebooks de ejemplo: el modelo (DeepSeek, compatible con el SDK de
-OpenAI) responde preguntas del usuario y, cuando necesita datos, llama a herramientas que consultan
-el snapshot —resumen, cola de triage, explicación y actividad de un usuario— para no inventar
-cifras. Sirve de guía (conceptos, cómo navegar) y de consulta sobre el periodo analizado.
+`POST /assistant/chat` implementa el asistente mediante **function calling**: el modelo (DeepSeek,
+compatible con el SDK de OpenAI) responde preguntas del usuario y, cuando necesita datos, invoca
+herramientas que consultan el snapshot —resumen, cola de triage, explicación y actividad de un
+usuario— para no inventar cifras. Sirve de guía sobre los conceptos y la navegación, y de consulta
+sobre el periodo analizado.
 
 - La **API key vive solo en el backend** (`DEEPSEEK_API_KEY`), nunca en el frontend.
 - Sin key, `/assistant/chat` responde **503** y el widget de la UI queda deshabilitado con un aviso;
@@ -35,10 +35,10 @@ cifras. Sirve de guía (conceptos, cómo navegar) y de consulta sobre el periodo
 ### Cómo el modelado llega a la interfaz
 
 ```
-Fase 4  entrena          → models/*.joblib          (binarios, NO versionados: se regeneran)
-Fase 5  puntúa y guarda  → docs/demo/snapshot.json  (1.3 MB, SÍ versionado: el puente)
-Fase 6  sirve            → esta API                 (carga el snapshot al arrancar)
-Fase 7  consume          → UI React                 (fetch a los endpoints)
+src/models.py      entrena     → models/*.joblib          (artefactos serializados)
+src/inference.py   puntúa      → docs/demo/snapshot.json  (el puente hacia la interfaz)
+api/main.py        sirve       → esta API                 (carga el snapshot al arrancar)
+ui/                consume     → interfaz React           (peticiones a los endpoints)
 ```
 
 El snapshot es el artefacto que **materializa los resultados del modelo**: contiene, por cada
@@ -46,7 +46,7 @@ usuario-día del periodo de prueba, la puntuación 0-100, el nivel del semáforo
 calibrada, el top-5 SHAP con comparativas, el resumen de actividad y los nodos del grafo ego.
 Regenerarlo: `python -m src.inference`.
 
-| Vista del plan | Endpoints que la alimentan |
+| Vista | Endpoints que la alimentan |
 |---|---|
 | **V1 Triage** | `/overview`, `/employees`, `/employees/{id}/risk`, `/employees/{id}/explanation`, `POST /cases/{id}/feedback` |
 | **V2 Investigación** | `/employees/{id}/activity` (incluye `ego_graph`), `/employees/{id}/explanation` (comparativas personal/pares), `GET /cases/{id}/feedback` |
@@ -58,7 +58,7 @@ OpenAPI interactivo en **`/docs`**. De ese esquema el frontend genera sus tipos 
 ### Códigos de estado con significado
 - **404** — empleado o día inexistente en el periodo servido.
 - **409** — el día existe pero es **nivel verde**: registro pasivo sin explicación ni detalle
-  (decisión de diseño de la sección 1, no un error).
+  (decisión de diseño del sistema, no un error).
 - **422** — parámetros fuera de contrato (nivel inválido, decisión no permitida...).
 - **503** — `/inference/score` sin artefactos en este despliegue; degradación explícita, nunca
   un fallo opaco.
@@ -70,12 +70,12 @@ pip install -r api/requirements.txt
 uvicorn api.main:app --reload          # http://127.0.0.1:8000/docs
 ```
 
-Requiere `docs/demo/snapshot.json` (se genera en la Fase 5 con `python -m src.inference`).
+Requiere `docs/demo/snapshot.json`, que se genera con `python -m src.inference`.
 
 ## Pruebas de contrato
 
 ```bash
-pytest api/tests -q      # 15 tests
+pytest api/tests -q      # 23 pruebas
 ```
 
 Son la **definición de "listo"** del backend: verifican códigos de estado, forma de la respuesta e
@@ -84,13 +84,16 @@ coherencia entre la inferencia en vivo y el snapshot).
 
 ## Despliegue
 
+Desplegado en **Render** con Docker. Instrucciones completas en [DEPLOY.md](../DEPLOY.md).
+
+Para construir y probar la imagen en local:
+
 ```bash
 docker build -f api/Dockerfile -t nexus-sentinel-api .
 docker run -p 7860:7860 nexus-sentinel-api
 ```
 
-- **Hugging Face Spaces (Docker):** puerto 7860 por defecto.
-- **Render free:** inyecta `$PORT`, ya contemplado en el `CMD`.
+Render inyecta la variable `$PORT`, que el `CMD` del Dockerfile ya respeta.
 
 ### Variables de entorno
 

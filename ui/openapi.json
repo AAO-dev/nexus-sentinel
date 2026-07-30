@@ -190,7 +190,7 @@
           "empleado"
         ],
         "summary": "Employee Explanation",
-        "description": "Top-5 SHAP del día, con el valor del usuario vs. su promedio personal y vs. su peer group.\n\nSolo hay explicación para días con alerta: los verdes son registro pasivo (sección 1 del plan).",
+        "description": "Top-5 SHAP del día, con el valor del usuario vs. su promedio personal y vs. su peer group.\n\nSolo hay explicación para días con alerta: los verdes son registro pasivo.",
         "operationId": "employee_explanation_employees__employee_id__explanation_get",
         "parameters": [
           {
@@ -294,7 +294,7 @@
           "triage"
         ],
         "summary": "Case Feedback",
-        "description": "Registra la decisión del analista (falso positivo / investigar / escalar).\n\nCierra el ciclo human-in-the-loop: ninguna acción sobre la cuenta es automática, y la decisión\nqueda trazada para auditoría (sección 1.2, perfil de Cumplimiento).\nNota de despliegue: en HF Spaces / Render free el almacenamiento es efímero.",
+        "description": "Registra la decisión del analista (falso positivo / investigar / escalar).\n\nCierra el ciclo human-in-the-loop: ninguna acción sobre la cuenta es automática, y la decisión\nqueda trazada para auditoría.\nNota de despliegue: en planes gratuitos el almacenamiento es efímero.",
         "operationId": "case_feedback_cases__case_id__feedback_post",
         "parameters": [
           {
@@ -345,7 +345,7 @@
           "triage"
         ],
         "summary": "Case Feedback History",
-        "description": "Historial de decisiones del analista sobre un caso (vista 2 del plan).\n\nCierra la trazabilidad que exige el perfil de Cumplimiento (sección 1.2): toda decisión sobre\nuna cuenta queda registrada y es consultable.",
+        "description": "Historial de decisiones del analista sobre un caso.\n\nCierra la trazabilidad que exige un perfil de cumplimiento: toda decisión sobre\nuna cuenta queda registrada y es consultable.",
         "operationId": "case_feedback_history_cases__case_id__feedback_get",
         "parameters": [
           {
@@ -416,7 +416,7 @@
           "asistente"
         ],
         "summary": "Assistant Chat",
-        "description": "Asistente conversacional (requerimiento del profesor): guía al usuario y responde preguntas\nsobre los datos consultando el modelo vía function calling (DeepSeek).\n\nLa API key vive solo en el backend. Sin ella, degrada con 503 explícito.",
+        "description": "Asistente conversacional: guía al usuario y responde preguntas sobre los datos\nconsultando el modelo mediante function calling (DeepSeek).\n\nLa API key vive solo en el backend. Sin ella, degrada con 503 explícito.",
         "operationId": "assistant_chat_assistant_chat_post",
         "requestBody": {
           "content": {
@@ -458,7 +458,7 @@
           "inferencia"
         ],
         "summary": "Inference Score",
-        "description": "Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo (sección 6.2 del plan).\n\nDemuestra el flujo completo frente al snapshot precomputado. Requiere los artefactos\nserializados; si no están presentes responde 503 en lugar de fallar de forma opaca.",
+        "description": "Inferencia REAL sobre un usuario-día: ejecuta el modelo en vivo.\n\nDemuestra el flujo completo frente al snapshot precomputado. Requiere los artefactos\nserializados; si no están presentes responde 503 en lugar de fallar de forma opaca.",
         "operationId": "inference_score_inference_score_post",
         "requestBody": {
           "content": {
@@ -708,7 +708,7 @@
           "conocidos_truncados"
         ],
         "title": "EgoGraph",
-        "description": "Nodos del mini-grafo usuario→computadoras (elemento visual diferenciador, vista 2)."
+        "description": "Nodos del mini-grafo usuario→computadoras que dibuja la vista de investigación."
       },
       "EmpleadoCola": {
         "properties": {

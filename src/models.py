@@ -1,6 +1,6 @@
-"""Modelado y evaluación (Fase 4, sección 5 del plan).
+"""Modelado, evaluación y análisis de estabilidad.
 
-Decisiones justificadas de la fase (cada una se narra en el notebook):
+Decisiones justificadas (cada una se narra en detalle en el notebook):
 
 NO SUPERVISADO
 - Isolation Forest baseline: contamination='auto' — fijarlo con la tasa real de ataque (0.38%)
@@ -10,10 +10,10 @@ NO SUPERVISADO
   sus scores se contrastan con las etiquetas en test (PR-AUC, recall@FPR) — las etiquetas se usan
   para MEDIR, nunca para entrenar. Elección de features: se comparan dos vistas (todas vs. solo
   desviaciones+grafo) porque IF se diluye en alta dimensión con features crudas de escala dispar.
-- KMeans de peer groups: los clusters vienen congelados de la Fase 3 (fit en train). Aquí genera
-  (a) un score de anomalía por usuario-día — distancia del vector del día al centroide de SU rol,
-  en el espacio escalado del perfil — evaluado también a posteriori, y (b) la feature
-  dist_peer_centroide que entra al supervisado en la iteración 4.8.
+- KMeans de peer groups: los clusters vienen congelados de src/features.py (ajustados solo con
+  train). Aquí genera (a) un score de anomalía por usuario-día —distancia del vector del día al
+  centroide de SU rol, en el espacio escalado del perfil— evaluado también a posteriori, y (b) la
+  feature dist_peer_centroide, que se prueba en el supervisado y se conserva solo si mejora.
 
 SUPERVISADO (XGBoost central; RF y LR de referencia)
 - Desbalance: scale_pos_weight = negativos/positivos DEL TRAIN (no de toda la tabla).
@@ -49,7 +49,7 @@ EPS = 1e-9
 TRAIN_END_DAY = 14        # train: 0-13
 VAL_END_DAY = 20          # val: 14-19 | test (OOT): 20-29
 FPR_TARGETS = (0.01, 0.001)
-SOC_TICKETS_DIA = 20      # capacidad naranja (sección 1 del plan: percentiles operativos)
+SOC_TICKETS_DIA = 20      # capacidad diaria del SOC para tickets de nivel naranja
 SOC_ROJOS_DIA = 5
 N_ITER_XGB = 40
 PSI_BINS = 10
@@ -60,7 +60,7 @@ PSI_BINS = 10
 # ---------------------------------------------------------------------------
 
 def three_way_split(ud: pd.DataFrame) -> pd.DataFrame:
-    """train/val/test por día calendario. El 'split' de Fase 3 (train/test) se refina aquí:
+    """train/val/test por día calendario. El 'split' binario de features.py se refina aquí:
     los últimos 6 días del train original se vuelven validación."""
     ud = ud.copy()
     ud["conjunto"] = np.where(ud.day < TRAIN_END_DAY, "train",
@@ -107,7 +107,7 @@ def deviation_graph_view(features: list[str]) -> list[str]:
 def kmeans_day_distance(ud: pd.DataFrame, models_dir: str | Path = "models") -> pd.Series:
     """Distancia del VECTOR DEL DÍA (perfil-cols) al centroide del cluster del usuario.
 
-    El KMeans se ajustó sobre perfiles medianos de train (Fase 3); aquí solo se TRANSFORMA cada
+    El KMeans se ajustó sobre perfiles medianos de train; aquí solo se TRANSFORMA cada
     día con el mismo log1p+scaler congelado. Usuarios sin cluster (-1): se imputa la mediana de
     train de las distancias (el flag sin_peer_group ya informa al modelo de la imputación)."""
     art = joblib.load(Path(models_dir) / "peer_kmeans.joblib")
@@ -247,7 +247,7 @@ def fit_calibrator(scores_val: np.ndarray, y_val: np.ndarray, seed: int = SEED) 
 
 
 # ---------------------------------------------------------------------------
-# Evaluación (sección 5.4)
+# Evaluación
 # ---------------------------------------------------------------------------
 
 def recall_at_fpr(y: np.ndarray, s: np.ndarray, fpr_obj: float) -> float:
@@ -354,7 +354,7 @@ def ks_table(y: np.ndarray, s: np.ndarray, n_bins: int = PSI_BINS) -> tuple[pd.D
 
 def run_fase4(work_dir: str | Path = "data/work", models_dir: str | Path = "models",
               out_dir: str | Path = "docs/modeling", seed: int = SEED) -> dict:
-    """Pipeline completo de la Fase 4. Devuelve el reporte; persiste figuras, JSON y artefactos."""
+    """Pipeline completo de modelado. Devuelve el reporte; persiste figuras, JSON y artefactos."""
     from sklearn.metrics import average_precision_score
 
     work_dir, models_dir, out_dir = Path(work_dir), Path(models_dir), Path(out_dir)

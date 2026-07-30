@@ -52,7 +52,7 @@ export function Loading({ rows = 4 }: { rows?: number }) {
 
 /**
  * Estado de error legible. El 409 del backend no es un fallo: significa "día verde, registro
- * pasivo" — se muestra como información, no como alarma (coherente con el contrato de la Fase 6).
+ * pasivo" — se muestra como información, no como alarma (coherente con el contrato de la API).
  */
 export function ErrorState({ error }: { error: unknown }) {
   const status = (error as { status?: number })?.status;

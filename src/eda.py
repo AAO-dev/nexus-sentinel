@@ -1,4 +1,4 @@
-"""EDA del dataset de trabajo (Fase 2, sección 3 del plan).
+"""Análisis exploratorio del dataset de trabajo.
 
 Criterio rector acordado con el usuario: POCAS figuras, cada una respondiendo una pregunta
 del problema. Selección curada:
@@ -14,7 +14,7 @@ del problema. Selección curada:
 El desbalance NO es gráfica: es tabla/KPI (un número así de extremo se comunica mejor como número).
 
 La agregación pesada usa polars en modo lazy (37.5M filas); pandas solo toca agregados chicos.
-Este módulo también fija el estilo de gráficas del proyecto (pendiente de Fase 0): paleta
+Este módulo también fija el estilo de gráficas del proyecto: paleta
 categórica validada para daltonismo (azul=normal, rojo=comprometido), tinta neutra, sin ruido.
 """
 
@@ -78,7 +78,8 @@ def apply_style() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Carga y agregación usuario-día (versión ligera de EDA; la completa es Fase 3)
+# Carga y agregación usuario-día (versión ligera para el EDA; la tabla completa la
+# construye src/features.py)
 # ---------------------------------------------------------------------------
 
 def scan_work(work_dir: str | Path = "data/work") -> tuple[pl.LazyFrame, pd.DataFrame, dict]:
@@ -166,7 +167,7 @@ def infer_circadian(auth: pl.LazyFrame) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Tablas (sección 3.1) y KPIs (3.3)
+# Tablas de resumen e indicadores
 # ---------------------------------------------------------------------------
 
 def table_types(auth: pl.LazyFrame) -> dict[str, pd.DataFrame]:
@@ -180,7 +181,7 @@ def table_types(auth: pl.LazyFrame) -> dict[str, pd.DataFrame]:
 
 
 def build_tables_and_kpis(ud: pd.DataFrame, redteam: pd.DataFrame, meta: dict, circ: dict) -> dict:
-    """Tablas de resumen, red team y desbalance + KPIs de la sección 3.3."""
+    """Tablas de resumen, red team y desbalance, más los indicadores del EDA."""
     c = meta["counts"]
     mal = ud[ud["y"] == 1]
     nor = ud[ud["y"] == 0]

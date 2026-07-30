@@ -1,5 +1,5 @@
 /**
- * Evolución del riesgo con los umbrales operativos sombreados (sección 8.2 del plan).
+ * Evolución del riesgo con los umbrales operativos sombreados.
  * Los umbrales vienen del backend vía los niveles de cada punto: la UI no los recalcula.
  */
 import {

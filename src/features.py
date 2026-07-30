@@ -1,4 +1,4 @@
-"""Ingeniería de variables usuario-día (Fase 3, secciones 4.1-4.4 y 4.6-4.7 del plan).
+"""Ingeniería de variables sobre la unidad de análisis usuario-día.
 
 Principio rector: el modelo no ve logs, ve desviaciones. Cada feature responde una de estas
 preguntas, y cada nivel existe porque el anterior no basta:
@@ -8,7 +8,7 @@ preguntas, y cada nivel existe porque el anterior no basta:
 (c) ¿Qué tan distinto de SUS PARES?  -> peer groups KMeans + desviación grupal (add_peer_deviation)
 (d) ¿Qué tan nuevo es su grafo?      -> src/graph.py (add_graph_features)
 
-Reglas anti-fuga aplicadas en este módulo (auditables con la skill /revisar-fugas):
+Reglas anti-fuga aplicadas en este módulo:
 - Desviación personal: estadísticas sobre los días previos del usuario vía shift(1) + rolling —
   el día evaluado JAMÁS entra en su propia media/desviación/máximo.
 - Peer groups: los perfiles y el KMeans se ajustan SOLO con días de entrenamiento (day < SPLIT_DAY);
@@ -19,7 +19,7 @@ Reglas anti-fuga aplicadas en este módulo (auditables con la skill /revisar-fug
   n_eventos_redteam y el mapeo para la UI, nunca insumos del modelo.
 - Partición temporal estricta por día calendario (temporal_split), nunca aleatoria.
 
-Nota metodológica (auditoría /revisar-fugas): las fronteras circadianas (work_hours,
+Nota metodológica: las fronteras circadianas (work_hours,
 nonwork_days) se infieren de la actividad AGREGADA de la red en la ventana completa. Es
 información contemporánea sin etiquetas — el nivel de actividad global de un día es observable
 al cierre de ese día en un SOC real, igual que las estadísticas de peers del mismo día — y de
@@ -39,9 +39,9 @@ import polars as pl
 from src.data import SECONDS_PER_DAY, SEED
 
 EPS = 1e-6
-HISTORY_WINDOW_DAYS = 30   # ventana móvil de días ACTIVOS previos del usuario (4.3)
-MIN_HISTORY_DAYS = 7       # menos que esto: desviaciones imputadas a 0 + flag historial_corto (4.7)
-SPLIT_DAY = 20             # train: días 0-19 (67%), test: días 20-29 (33%) — partición 4.7
+HISTORY_WINDOW_DAYS = 30   # ventana móvil de días ACTIVOS previos del usuario
+MIN_HISTORY_DAYS = 7       # menos que esto: desviaciones imputadas a 0 + flag historial_corto
+SPLIT_DAY = 20             # train: días 0-19 (67%), test: días 20-29 (33%)
 KMEANS_K_RANGE = range(2, 11)
 
 # Features a las que se aplica desviación personal (z, ratio_max) — las señales del EDA
@@ -50,19 +50,19 @@ DEVIATION_COLS = [
     "n_ntlm", "ratio_ntlm", "n_fuera_horario", "amplitud_horaria", "n_tgs",
     "n_uso_como_identidad_destino",
 ]
-FIRST_TIME_COLS = ["n_ntlm", "n_fuera_horario", "n_fallos"]  # flags de primera vez (4.3)
+FIRST_TIME_COLS = ["n_ntlm", "n_fuera_horario", "n_fallos"]  # flags de primera vez
 
-# Perfil estático por usuario para peer groups (medianas históricas de train, 4.4)
+# Perfil estático por usuario para peer groups (medianas históricas de train)
 PEER_PROFILE_COLS = [
     "n_eventos", "n_dst_computers", "n_src_computers", "ratio_ntlm", "ratio_fallos",
     "n_fuera_horario", "amplitud_horaria",
 ]
-# Desviación grupal del día contra el cluster (4.4.3)
+# Desviación grupal del día contra el cluster
 PEER_Z_COLS = ["n_eventos", "n_dst_computers", "ratio_ntlm", "ratio_fallos"]
 
 
 # ---------------------------------------------------------------------------
-# (a) Features crudas — sección 4.2
+# (a) Features crudas: qué hizo el usuario hoy
 # ---------------------------------------------------------------------------
 
 def build_raw_user_day(
@@ -71,7 +71,7 @@ def build_raw_user_day(
     work_hours: list[int],
     nonwork_days: list[int],
 ) -> pd.DataFrame:
-    """Tabla maestra (user, day) con las features crudas de la sección 4.2.
+    """Tabla maestra (user, day) con las features crudas de actividad.
 
     Grano: una fila por usuario muestreado y día en que tuvo >=1 evento como origen.
     Las fronteras temporales (work_hours, nonwork_days) vienen inferidas del EDA.
@@ -132,7 +132,7 @@ def build_raw_user_day(
     )
 
     # veces que la cuenta aparece como IDENTIDAD DESTINO de otra identidad origen:
-    # la firma de credenciales usadas en cadenas de saltos máquina-a-máquina (sección 4.2,
+    # la firma de credenciales usadas en cadenas de saltos máquina-a-máquina (variable de
     # "dirección"). Se calcula sobre TODOS los eventos retenidos (por eso la regla de
     # muestreo conserva eventos donde el usuario es destino).
     como_dst = (
@@ -166,7 +166,7 @@ def build_raw_user_day(
 
 
 # ---------------------------------------------------------------------------
-# (b) Desviación personal — sección 4.3 (corazón del proyecto)
+# (b) Desviación personal: contra el propio pasado del usuario (núcleo del enfoque)
 # ---------------------------------------------------------------------------
 
 def add_personal_deviation(ud: pd.DataFrame) -> pd.DataFrame:
@@ -178,7 +178,7 @@ def add_personal_deviation(ud: pd.DataFrame) -> pd.DataFrame:
     (filas de la tabla), la aproximación honesta cuando los usuarios tienen días sin actividad.
 
     Días con historial < MIN_HISTORY_DAYS: desviaciones imputadas a 0 + flag historial_corto
-    (sección 4.7) — el modelo aprende a no confiar en desviaciones sin línea base.
+    para que el modelo aprenda a no confiar en desviaciones sin línea base.
     """
     ud = ud.sort_values(["src_user", "day"]).reset_index(drop=True)
     g = ud.groupby("src_user", sort=False)
@@ -217,7 +217,7 @@ def add_personal_deviation(ud: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# (c) Peer groups conductuales — sección 4.4
+# (c) Peer groups conductuales: contra usuarios que se comportan igual
 # ---------------------------------------------------------------------------
 
 def build_peer_profiles(ud: pd.DataFrame) -> pd.DataFrame:
@@ -252,7 +252,7 @@ def _peer_design_matrix(profiles: pd.DataFrame, scaler=None):
 
 
 def fit_peer_kmeans(profiles: pd.DataFrame) -> dict:
-    """KMeans sobre perfiles escalados; k elegido por silhouette (sección 4.4.2).
+    """KMeans sobre perfiles escalados; k elegido por silhouette.
 
     Dos salvaguardas contra soluciones degeneradas:
     - log1p en las features de volumen (colas pesadas) antes del RobustScaler.
@@ -293,7 +293,7 @@ def fit_peer_kmeans(profiles: pd.DataFrame) -> dict:
 
 
 def add_peer_deviation(ud: pd.DataFrame, user_cluster: pd.Series) -> pd.DataFrame:
-    """z-score del día contra la distribución de su cluster ESE MISMO DÍA (sección 4.4.3).
+    """z-score del día contra la distribución de su cluster ESE MISMO DÍA.
 
     Responde: "hoy, ¿se comportó distinto a la gente que se comporta como él?". Usa información
     contemporánea de otros usuarios (sin etiquetas), disponible al cierre del día en un SOC real;
@@ -360,7 +360,7 @@ def temporal_split(ud: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                  "dias_ataque": sorted(ud.loc[(ud.split == "test") & (ud.y == 1), "day"].unique().tolist())},
     }
     assert resumen["train"]["maliciosos"] > 0 and resumen["test"]["maliciosos"] > 0, \
-        "ambos lados de la partición deben contener días de ataque (sección 4.7)"
+        "ambos lados de la partición deben contener días de ataque"
     return ud, resumen
 
 
@@ -382,7 +382,7 @@ def build_master_table(
     eda_results: str | Path = "docs/eda/eda_results.json",
     models_dir: str | Path = "models",
 ) -> tuple[pd.DataFrame, dict]:
-    """Pipeline completo de la Fase 3. Persiste user_day_features.parquet + metadata + KMeans.
+    """Pipeline completo de variables. Persiste user_day_features.parquet + metadata + KMeans.
 
     Orden: crudas -> desviación personal -> grafo (src/graph.py) -> peers -> etiquetas -> split.
     """

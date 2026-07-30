@@ -1,14 +1,12 @@
-"""Asistente conversacional del proyecto (requerimiento del profesor).
+"""Asistente conversacional de la consola.
 
-Adapta la técnica de **function calling** de los notebooks de ejemplo del profesor (Finova) al
-dominio de Nexus Sentinel. En vez de traer transcripciones financieras con una tool, aquí las
-tools consultan el snapshot del modelo — así el asistente responde con los datos REALES que produjo
-el pipeline (no inventa) y además guía al usuario sobre cómo usar la consola y qué significan los
-conceptos (riesgo, semáforo, SHAP, movimiento lateral).
+Implementado con la técnica de **function calling**: en lugar de responder de memoria, el modelo
+dispone de herramientas que consultan el snapshot, de modo que sus respuestas usan los datos REALES
+que produjo el pipeline en vez de cifras inventadas. Además guía al usuario sobre cómo usar la
+consola y qué significan los conceptos (riesgo, semáforo, SHAP, movimiento lateral).
 
-Proveedor: **DeepSeek** (API gratuita, compatible con el SDK de OpenAI). Solo cambian `base_url` y
-el nombre del modelo respecto al ejemplo del profesor; el patrón `chat(message, history)` +
-`handle_tool_calls` es el mismo.
+Proveedor: **DeepSeek**, cuya API es compatible con el SDK de OpenAI: basta con apuntar `base_url`
+a su endpoint y elegir el modelo.
 
 Seguridad: la API key vive SOLO en el backend (variable de entorno DEEPSEEK_API_KEY). Nunca se
 expone al frontend. Si la key no está configurada, el orquestador lo indica y el endpoint degrada

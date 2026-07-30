@@ -1,23 +1,23 @@
-"""Flujo de inferencia + explicación SHAP local + snapshot de demo (Fase 5, sección 6.2 del plan).
+"""Flujo de inferencia, explicación SHAP local y construcción del snapshot de demo.
 
-Flujo (sección 6.2):
+Flujo:
   eventos de auth del día → misma tubería de features (grafo congelado a D-1)
   → prob supervisada + anomaly_score → puntuación 0-100 → nivel verde/naranja/rojo
   → top-5 SHAP → JSON para la API
 
-Decisiones que heredan de la Fase 4 (y por qué NO se usan los valores por defecto del plan):
-- Puntuación de riesgo: riesgo = 100·(w·prob_calibrada + (1-w)·anomaly_norm). El plan proponía
-  w=0.7 "inicial"; aquí w se ELIGE en validación por PR-AUC (select_blend_weight). El resultado
-  quedó cerca de 1.0 (el supervisado domina, hallazgo de la sección 4.9): el componente de
-  anomalía aporta robustez marginal pero se conserva por el diseño híbrido de la sección 1.
+Decisiones heredadas del modelado, y por qué no se usan valores por defecto:
+- Puntuación de riesgo: riesgo = 100·(w·prob_calibrada + (1-w)·anomaly_norm). El diseño inicial
+  proponía un w fijo de 0.7; aquí se ELIGE en validación por PR-AUC (select_blend_weight), y el
+  resultado quedó cerca de 1.0 porque el supervisado domina. El componente de anomalía aporta
+  robustez marginal, pero se conserva por el diseño híbrido del sistema.
 - Componente de anomalía: Isolation Forest normalizado con referencia AJUSTADA EN TRAIN
   (min/max de los scores de train), para no filtrar la distribución de test.
-- Agregación por usuario (K días): K=1 — la sección 4.9 mostró que agregar no generaliza. El
+- Agregación por usuario (K días): K=1 — agregar no generaliza (verificado en validación). El
   ranking usa el riesgo del día; la línea de tiempo muestra la serie completa para el analista.
 - Umbrales verde/naranja/rojo: recomputados en el espacio 0-100 sobre la validación por capacidad
-  operativa del SOC (percentiles ~N tickets/día), coherentes con la sección 1 del plan.
+  operativa del SOC (percentiles ~N tickets/día).
 
-El snapshot de demo precomputa TODO el periodo de prueba en un JSON que la API (Fase 6) sirve tal
+El snapshot de demo precomputa TODO el periodo de prueba en un JSON que la API sirve tal
 cual — estable en vivo — y el mismo módulo puntúa un usuario-día individual (inferencia real).
 """
 
@@ -35,7 +35,7 @@ from src.models import SOC_ROJOS_DIA, SOC_TICKETS_DIA, three_way_split
 
 LEVELS = ("verde", "naranja", "rojo")
 
-# Etiquetas legibles para la explicación SHAP y el "motivo" de la cola de triage (sección 8.2).
+# Etiquetas legibles para la explicación SHAP y el "motivo" de la cola de triage.
 FEATURE_LABELS = {
     "ratio_ntlm": "Ratio NTLM", "n_ntlm": "Autenticaciones NTLM", "z_n_ntlm": "NTLM vs. su base",
     "n_src_computers_nuevas": "Máquinas origen nuevas", "n_aristas_nuevas": "Destinos nuevos",
@@ -53,7 +53,7 @@ FEATURE_LABELS = {
 
 
 def display_id(src_user: str) -> str:
-    """U66@DOM1 -> 'U-0066' (ID anonimizado para la UI, sección 8.3)."""
+    """U66@DOM1 -> 'U-0066' (identificador anonimizado para la interfaz)."""
     local = src_user.split("@", 1)[0]
     num = "".join(ch for ch in local if ch.isdigit())
     return f"U-{int(num):04d}" if num else local
@@ -68,7 +68,7 @@ def human_label(feature: str) -> str:
 # ---------------------------------------------------------------------------
 
 def load_artifacts(models_dir: str | Path = "models") -> dict:
-    """Carga el bundle de la Fase 4 (+ KMeans de pares y bundle de inferencia si existe)."""
+    """Carga los artefactos del modelado (+ KMeans de pares y bundle de inferencia si existe)."""
     models_dir = Path(models_dir)
     art = joblib.load(models_dir / "fase4_artefactos.joblib")
     art["peer_kmeans"] = joblib.load(models_dir / "peer_kmeans.joblib")
@@ -97,7 +97,7 @@ def anomaly_norm(scores: np.ndarray, ref_min: float, ref_max: float) -> np.ndarr
 
 
 def risk_0_100(prob: np.ndarray, anomaly01: np.ndarray, w: float) -> np.ndarray:
-    """Puntuación de riesgo 0-100 (sección 5.3), con w validado en la Fase 4."""
+    """Puntuación de riesgo 0-100, con el peso w elegido en validación."""
     return 100.0 * (w * prob + (1.0 - w) * anomaly01)
 
 
@@ -109,7 +109,7 @@ def assign_level(risk: np.ndarray | float, thr_naranja: float, thr_rojo: float):
 
 
 def local_shap_top(art: dict, X_row: pd.DataFrame, k: int = 5) -> list[dict]:
-    """Top-k contribuciones SHAP del usuario-día (explicación local, sección 5.4/6.2)."""
+    """Top-k contribuciones SHAP del usuario-día (explicación local)."""
     sv = art["explainer_shap"].shap_values(X_row[art["features"]].astype(float))
     sv = np.asarray(sv).reshape(-1)
     orden = np.argsort(np.abs(sv))[::-1][:k]
@@ -122,7 +122,7 @@ def enrich_shap_comparisons(shap_top: list[dict], row: pd.Series, hist_usuario: 
                             peer_means: pd.DataFrame) -> list[dict]:
     """Añade a cada contribución SHAP el valor del día vs. su promedio personal y vs. su peer group.
 
-    Es el contrato del endpoint `/employees/{id}/explanation` (sección 7 del plan): el analista no
+    Es el contrato del endpoint `/employees/{id}/explanation`: el analista no
     necesita el número SHAP crudo, necesita "tocó 49 destinos; tú promedias 12, tu grupo 8".
     El promedio personal usa SOLO días previos al evaluado (coherente con la regla anti-fuga).
     """
@@ -141,13 +141,13 @@ def enrich_shap_comparisons(shap_top: list[dict], row: pd.Series, hist_usuario: 
 
 def build_ego_graphs(auth_path: str | Path, pares_alerta: list[tuple[str, int]],
                      max_historicos: int = 40) -> dict[tuple[str, int], dict]:
-    """Nodos del grafo ego usuario→computadora para los días con alerta (vista 2, sección 8.2).
+    """Nodos del grafo ego usuario→computadora para los días con alerta (vista de investigación).
 
     El mini-grafo es el elemento visual diferenciador del proyecto: muestra en gris los destinos
     que el usuario ya conocía y en rojo los que tocó por primera vez ese día. El snapshot guardaba
     solo el CONTEO de destinos nuevos; sin la lista de nodos la UI no puede dibujarlo.
 
-    Coherente con la regla anti-fuga de la sección 4.5: "histórico" = tocado en días ANTERIORES.
+    Coherente con la regla anti-fuga del grafo: "histórico" = tocado en días ANTERIORES.
     Los destinos históricos se recortan a `max_historicos` (el grafo debe ser legible, y la
     historia visual está en los nuevos); se reporta el total real aparte.
     """
@@ -202,7 +202,7 @@ def motivo_una_linea(shap_top: list[dict], row: pd.Series) -> str:
 # ---------------------------------------------------------------------------
 
 def score_user_day(art: dict, row: pd.Series) -> dict:
-    """Puntúa una fila de features usuario-día → JSON de la sección 6.2."""
+    """Puntúa una fila de features usuario-día y devuelve el JSON que consume la API."""
     X = row.to_frame().T
     prob = float(supervised_prob(art, X)[0])
     anom = float(anomaly_norm(anomaly_raw(art, X), art["if_ref_min"], art["if_ref_max"])[0])
@@ -217,7 +217,7 @@ def score_user_day(art: dict, row: pd.Series) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Construcción del snapshot de demo (lo que sirve la API de la Fase 6)
+# Construcción del snapshot de demo (lo que sirve la API)
 # ---------------------------------------------------------------------------
 
 def select_blend_weight(prob_val: np.ndarray, anom_val: np.ndarray, y_val: np.ndarray) -> tuple[float, dict]:
@@ -241,7 +241,7 @@ def soc_thresholds_riesgo(risk_val: np.ndarray, days_val: np.ndarray) -> dict:
 
 def build_demo_snapshot(work_dir: str | Path = "data/work", models_dir: str | Path = "models",
                         out_path: str | Path = "docs/demo/snapshot.json") -> dict:
-    """Precomputa el periodo de prueba y arma el JSON que consumen los 7 endpoints (sección 7).
+    """Precomputa el periodo de prueba y arma el JSON que consumen los endpoints de la API.
 
     Además calibra y persiste en inference_bundle.joblib los parámetros de scoring (w, referencia
     de anomalía, umbrales 0-100) para que score_user_day funcione en vivo.
@@ -296,7 +296,7 @@ def build_demo_snapshot(work_dir: str | Path = "data/work", models_dir: str | Pa
                 "es_ataque_real": int(row["y"]),
             }
             # SHAP y detalle de actividad solo para días con alerta: los verdes son registro
-            # pasivo (sección 1 del plan) y no se investigan; esto mantiene el snapshot ligero.
+            # pasivo y no se investigan; esto mantiene el snapshot ligero.
             if row["level"] != "verde":
                 shap_top = enrich_shap_comparisons(
                     local_shap_top(art, row.to_frame().T), row,

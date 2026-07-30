@@ -1,8 +1,8 @@
 /**
- * Barra de acciones del analista (sección 8.2) + historial de decisiones.
+ * Barra de acciones del analista e historial de decisiones.
  *
- * Principio de diseño nº 3: "falso positivo" cierra el ciclo de retroalimentación. Y decisión de
- * diseño nº 3 del plan: human-in-the-loop — ninguna acción sobre la cuenta es automática; la UI
+ * Dos invariantes del sistema: "falso positivo" cierra el ciclo de retroalimentación, y
+ * human-in-the-loop — ninguna acción sobre la cuenta es automática; la UI
  * registra la decisión de una persona, no ejecuta bloqueos.
  */
 import { useState } from 'react';

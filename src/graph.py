@@ -1,4 +1,4 @@
-"""Features de grafo usuario→computadora (Fase 3, sección 4.5 del plan — nuevas en v2).
+"""Features de novedad de conexiones sobre el grafo usuario→computadora.
 
 Qué resuelven que los otros niveles no pueden: un atacante puede mantener su VOLUMEN dentro de lo
 normal (pocas autenticaciones, sin fallos, en horario laboral) y aun así necesita tocar máquinas
@@ -37,7 +37,7 @@ def _distinct_pairs(auth_lf: pl.LazyFrame, users: list[str], col: str) -> pd.Dat
 def add_graph_features(
     ud: pd.DataFrame, auth_lf: pl.LazyFrame, sampled_users: set[str]
 ) -> pd.DataFrame:
-    """Añade a la tabla usuario-día las 4 features de novedad de la sección 4.5:
+    """Añade a la tabla usuario-día las cuatro features de novedad de conexiones:
 
     - n_aristas_nuevas: computadoras destino que el usuario JAMÁS había tocado (hasta D-1).
     - ratio_aristas_nuevas: nuevas / destinos_del_día — separa "un servidor nuevo" (rutina)

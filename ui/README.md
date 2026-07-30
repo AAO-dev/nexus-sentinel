@@ -1,6 +1,6 @@
 # UI — Nexus Sentinel
 
-Consola del analista SOC en **React 18 + Vite + TypeScript**. Consume la API de la Fase 6 y presenta
+Consola del analista SOC en **React 18 + Vite + TypeScript**. Consume la API del proyecto y presenta
 la cola de triage priorizada y explicada.
 
 > Despliegue paso a paso: [DEPLOY.md](../DEPLOY.md) en la raíz del proyecto.
@@ -41,7 +41,7 @@ En desarrollo no hace falta configurar nada: Vite redirige `/api` al backend loc
 
 **Regla que gobierna todo el frontend:** la UI **nunca recalcula riesgo, umbrales ni explicaciones**.
 Si un número no viene de la API, no existe. Todo el conocimiento de ML vive en el backend
-(división de responsabilidades, sección 8.0 del plan).
+es la separación de responsabilidades que gobierna el sistema.
 
 ## Estructura
 
@@ -73,7 +73,7 @@ Además, un **asistente conversacional** flotante (botón 💬, presente en toda
 preguntas del usuario y sirve de guía. Habla con `POST /assistant/chat`; la API key de DeepSeek vive
 solo en el backend. Si no está configurada, el widget se muestra deshabilitado con un aviso claro.
 
-### Principios de diseño aplicados (sección 8.3 del plan)
+### Principios de diseño aplicados
 1. **Ninguna puntuación sin explicación** — el riesgo siempre aparece junto a su nivel y su SHAP.
 2. **Semáforo 1:1 con los accionables** — verde (pasivo) / naranja (ticket) / rojo (prioritario).
 3. **"Falso positivo" cierra el ciclo** — el feedback invalida la caché de la cola.

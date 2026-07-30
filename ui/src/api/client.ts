@@ -1,9 +1,9 @@
 /**
- * Cliente HTTP tipado contra el backend de la Fase 6.
+ * Cliente HTTP tipado contra el backend del proyecto.
  *
  * Los tipos NO se escriben a mano: se generan del OpenAPI del backend con
  * `npm run gen:api`. Así, si el contrato cambia, rompe el build del frontend —
- * no la demo en vivo (división de responsabilidades, sección 8.0 del plan).
+ * no la demo en vivo: es la separación de responsabilidades del sistema.
  */
 import type { components } from './schema';
 
