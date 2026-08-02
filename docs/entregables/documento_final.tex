@@ -94,8 +94,10 @@
 
     % Título del proyecto
     \textcolor{unamgold}{\rule{0.6\textwidth}{1.5pt}}\\[1cm]
-    {\huge\bfseries\color{unamblue} Proyecto Final}\\[0.3cm]
-    {\LARGE\bfseries Nexus Sentinel}\\[0.5cm]
+    {\huge\bfseries\color{unamblue} Proyecto Final}\\[0.45cm]
+    % El logotipo sustituye al nombre en texto: el lockup ya contiene el wordmark,
+    % así que escribirlo además sería redundante.
+    \includegraphics[width=0.34\textwidth]{img/logo.png}\\[0.45cm]
     \textcolor{unamgold}{\rule{0.6\textwidth}{1.5pt}}\\[1cm]
 
     % Subtítulo
@@ -424,59 +426,276 @@ y la justificación de todas las decisiones de evaluación que tomé después.
 % ────────────────────────────────────────────────────────────────────────────
 \section{Ingeniería de variables}
 
-Considero esta la sección crítica del proyecto. Mi principio rector fue que cada variable respondiera
-una pregunta de desviación, y las organicé en cuatro niveles, donde cada nivel existe porque el
-anterior tiene un punto ciego que un atacante disciplinado podría explotar. El resultado es una tabla
-maestra de 47\,956 usuario-días descritos por 61 variables, sin valores faltantes ni infinitos.
+Considero esta la sección crítica del proyecto. Un evento de autenticación aislado no dice nada
+---el incidente que motiva todo este trabajo ocurre precisamente porque cada autenticación
+individual es válida---. Lo que convierte 37.6 millones de eventos en algo modelable es responder,
+para cada usuario y cada día, cuatro preguntas encadenadas. Mi principio rector fue que ninguna
+variable existiera por estar disponible, sino porque responde una pregunta de desviación concreta.
 
-\begin{itemize}[leftmargin=1.5cm]
-  \item \textbf{(a) Variables crudas ---¿qué hizo hoy?} Capturan cada táctica concreta: el
-        \textbf{volumen} (número de eventos, logones), el \textbf{alcance} (computadoras destino y
-        origen distintas), los \textbf{fallos} (incluida la ráfaga máxima de fallos consecutivos,
-        firma de fuerza bruta), el \textbf{protocolo} (conteos de NTLM, Kerberos, tickets TGT/TGS y
-        el propio nulo como información), el \textbf{tipo de sesión} y las variables
-        \textbf{temporales} que usan las fronteras circadianas inferidas en el EDA.
-  \item \textbf{(b) Desviación personal ---¿qué tan distinto de su propio pasado?} Es el corazón del
-        proyecto. Para cada variable relevante calculo su z-score respecto a la media histórica del
-        propio usuario, su razón contra el máximo histórico y banderas de «primera vez». Lo «normal»
-        es personal: 22 destinos son rutina para un administrador y una alarma para un contador.
-  \item \textbf{(c) Desviación grupal ---¿qué tan distinto de sus pares?} Resuelve el punto ciego de
-        los eventos globales legítimos (una actualización que dispara la actividad de todos). Como los
-        datos están desidentificados y no hay roles organizacionales disponibles, construyo los pares
-        \textit{conductualmente} mediante agrupamiento (\textit{clustering}) sobre el perfil de cada
-        usuario, y mido la desviación del día contra la distribución de su grupo.
-  \item \textbf{(d) Novedad de grafo ---¿qué tan nuevo es su grafo de conexiones?} Cierra el punto
-        ciego del atacante que mantiene volumen y horario normales pero que, por definición del
-        movimiento lateral, no puede evitar tocar máquinas que la cuenta jamás visitó. Calculo el
-        número de aristas nuevas, su proporción, la rareza media de los destinos y el número de
-        máquinas origen nuevas.
+Las organicé en cuatro niveles, y cada nivel existe porque el anterior deja un punto ciego que un
+atacante disciplinado podría explotar. El cuadro \ref{tab:niveles} resume esa progresión.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{p{2.6cm}p{4cm}p{6.6cm}}
+\toprule
+\textbf{Nivel} & \textbf{La pregunta} & \textbf{El punto ciego que cierra} \\
+\midrule
+(a) Crudas & ¿Qué hizo hoy? & Sin esto no hay nada que comparar \\
+(b) Desviación personal & ¿Qué tan distinto de \textbf{su} pasado? & 22 destinos son rutina para un
+administrador y alarma para un contador: lo normal es personal \\
+(c) Desviación grupal & ¿Qué tan distinto de \textbf{sus pares} hoy? & Un evento global legítimo,
+como una actualización masiva, dispara a todos a la vez \\
+(d) Novedad de grafo & ¿Qué tan nuevo es su grafo de conexiones? & El atacante disciplinado mantiene
+volumen y horario normales, pero no puede evitar tocar máquinas que la cuenta jamás visitó \\
+\bottomrule
+\end{tabular}
+\caption{Los cuatro niveles de la ingeniería de variables. Cada nivel responde una pregunta que el
+anterior no puede responder.}
+\label{tab:niveles}
+\end{table}
+
+El resultado es una tabla maestra de \textbf{47\,956 usuario-días descritos por 61 variables}, sin un
+solo valor faltante ni infinito. Las imputaciones que realicé son explícitas y documentadas, no
+accidentales: desviaciones a cero cuando el historial disponible es menor a siete días, y grupo $-1$
+para usuarios sin perfil en el conjunto de entrenamiento. En ambos casos acompaño la imputación con
+una bandera booleana, de modo que el modelo pueda aprender a desconfiar de un valor imputado en lugar
+de leerlo como si fuera una medición real.
+
+\subsection{Nivel (a): qué hizo la cuenta hoy}
+
+Cada familia de variables crudas captura una táctica concreta del adversario:
+
+\begin{itemize}[leftmargin=1.2cm, itemsep=2pt]
+  \item \textbf{Volumen} (eventos, logones): actividad automatizada corriendo bajo una cuenta humana.
+  \item \textbf{Alcance} (computadoras destino y origen distintas): la huella del movimiento lateral
+        que el análisis exploratorio confirmó.
+  \item \textbf{Fallos}, incluida la ráfaga máxima de fallos consecutivos, firma de fuerza bruta. El
+        fallo crudo engaña por sí solo, y por eso esta familia únicamente resulta útil combinada con
+        el nivel siguiente.
+  \item \textbf{Protocolo}: NTLM como vehículo de \textit{pass-the-hash}, el desbalance entre tickets
+        TGS y TGT como señal de abuso de Kerberos, y el propio valor ausente contado como información.
+  \item \textbf{Tipo de sesión}: en una red donde las sesiones interactivas son el 0.2\,\% del total,
+        una sesión inusual dice mucho.
+  \item \textbf{Temporales}: construidas con las fronteras de horario laboral y días no laborales que
+        inferí de los propios datos, no con un calendario externo.
+  \item \textbf{Dirección}: cuántas veces la cuenta aparece como identidad \textit{destino} de otra,
+        que es la firma de una credencial inyectada en cadenas de saltos.
 \end{itemize}
 
+Antes de avanzar quise entender con qué tipo de distribuciones estaba tratando. El cuadro
+\ref{tab:crudas} muestra las estadísticas de nueve variables representativas.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Variable} & \textbf{Media} & \textbf{Mediana} & \textbf{Máximo} \\
+\midrule
+Eventos de autenticación & 773.62 & 287.0 & 243\,541 \\
+Computadoras destino & 10.07 & 10.0 & 2\,343 \\
+Fallos & 4.70 & 0.0 & 11\,434 \\
+Ráfaga máxima de fallos consecutivos & 3.96 & 0.0 & 10\,405 \\
+Proporción de NTLM & 0.03 & 0.0 & 1.0 \\
+Tickets TGS & 91.10 & 42.0 & 28\,221 \\
+Eventos fuera de horario & 372.51 & 86.0 & 112\,286 \\
+Amplitud horaria (horas activas) & 13.38 & 15.0 & 23 \\
+Uso como identidad destino & 10.12 & 0.0 & 17\,229 \\
+\bottomrule
+\end{tabular}
+\caption{Estadísticas de las variables crudas sobre los 47\,956 usuario-días. Las medias superan
+ampliamente a las medianas en todas las familias: las distribuciones tienen colas extremas.}
+\label{tab:crudas}
+\end{table}
+
+Estas cifras confirman el punto ciego del nivel (a). Con colas tan largas, cualquier umbral global
+sobre una variable cruda cometería los dos errores a la vez: ahogaría al equipo de seguridad en
+falsos positivos de cuentas naturalmente ruidosas y, simultáneamente, dejaría pasar a un atacante
+discreto operando dentro de una cuenta silenciosa. La salida no es buscar un umbral mejor, sino
+cambiar la pregunta y comparar a cada usuario contra sí mismo.
+
+\subsection{Nivel (b): la desviación contra su propio pasado}
+
+Este nivel resuelve el problema que hace invisible a este tipo de incidente: lo normal es personal.
+Para cada variable relevante calculo, sobre una ventana móvil de hasta 30 días activos previos del
+mismo usuario, tres construcciones complementarias:
+
+\begin{enumerate}[leftmargin=1.2cm, itemsep=2pt]
+  \item el \textbf{z-score} del día respecto a la media y desviación históricas del propio usuario;
+  \item la \textbf{razón contra su máximo histórico}, que detecta récords personales incluso cuando
+        la varianza del usuario es alta y el z-score se diluye;
+  \item \textbf{banderas de primera vez}, porque hay comportamientos en los que pasar de cero a uno
+        importa más que cualquier magnitud.
+\end{enumerate}
+
+Aquí vive la regla anti-fuga central del proyecto, que detallo en la sección \ref{sec:antifuga}:
+todas las estadísticas se calculan sobre la serie del usuario desplazada un día, de modo que el día
+evaluado nunca participa en el cálculo de su propia línea base. Sin ese desplazamiento, un día de
+actividad masiva elevaría su propia media y quedaría auto-camuflado.
+
+Para mostrar qué logra este nivel, el cuadro \ref{tab:caso} traduce a variables el mismo día de
+ataque que analicé en el análisis exploratorio.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lr}
+\toprule
+\textbf{Variable (cuenta U3635, día 8)} & \textbf{Valor} \\
+\midrule
+Eventos de autenticación & 761.00 \\
+Desviación de volumen frente a su base & 0.687 \\
+\midrule
+Computadoras destino & 49.00 \\
+Desviación de alcance frente a su base & \textbf{7.694} \\
+Razón contra su máximo histórico de alcance & 1.885 \\
+Desviación de alcance frente a sus pares & \textbf{4.548} \\
+\midrule
+Conexiones nuevas abiertas & 28.00 \\
+Fracción de conexiones nuevas & 0.571 \\
+Rareza media de los destinos & 0.378 \\
+\bottomrule
+\end{tabular}
+\caption{El día del ataque de una cuenta comprometida, traducido a variables. El volumen es
+indistinguible de lo normal; el alcance y la novedad lo delatan.}
+\label{tab:caso}
+\end{table}
+
+Esta fila condensa la tesis del proyecto. El día del ataque \textbf{el volumen parece normal}: la
+desviación de eventos es de 0.687, menos de una desviación estándar de su propia media, de modo que
+un detector basado en volumen no habría visto absolutamente nada. Pero las desviaciones de alcance y
+novedad lo delatan por completo: tocó destinos a \textbf{7.7 desviaciones estándar} de su línea base
+personal, rompió su máximo histórico por un 88\,\%, quedó a \textbf{4.5 desviaciones} de sus pares
+conductuales ese mismo día, y 28 de sus 49 destinos eran nuevos, con una rareza media ocho veces
+superior a la mediana normal. Es exactamente la narrativa que la interfaz traduce después a lenguaje
+natural para el analista: \textit{hoy tocó 49 servidores; su historia decía otra cosa}.
+
+\subsection{Nivel (c): la desviación contra sus pares}
+
+La desviación personal tiene a su vez dos puntos ciegos. El primero son los usuarios con poco
+historial, que sencillamente no tienen contra qué compararse. El segundo, más sutil, son los eventos
+globales legítimos: si una actualización masiva dispara la actividad de toda la organización un
+martes, castigar a cada usuario por su z-score personal generaría una ola de falsos positivos. La
+comparación contra pares resuelve ambos, bajo una lógica simple: si todos los de tu rol subieron hoy,
+tú no destacas.
+
+El obstáculo es que los datos están desidentificados y no existe organigrama ni catálogo de puestos.
+Construyo entonces los pares \textbf{por comportamiento}, agrupando a los usuarios según su perfil
+mediano del periodo de entrenamiento y midiendo la desviación de cada día contra la distribución de
+su grupo. La construcción del agrupamiento y el conflicto metodológico que tuve que corregir se
+detallan en la sección de modelado, porque este mismo modelo cumple allí un segundo papel como
+detector no supervisado.
+
+La partición resultante separa dos regímenes conductuales nítidos: un grupo de 2\,332 cuentas ligeras
+e intermitentes ---mediana de 6 eventos y 2 destinos por día, sin actividad fuera de horario--- y otro
+de 1\,375 cuentas pesadas siempre encendidas, con mediana de 406 eventos, 12 destinos y 23 horas de
+amplitud. Los 397 usuarios restantes carecen de días en entrenamiento, reciben grupo $-1$ y su
+desviación grupal se imputa a cero con su bandera correspondiente.
+
+Que los grupos separen precisamente los dos regímenes que contaminaban las variables crudas ---las
+cuentas ruidosas frente a las silenciosas--- es lo que vuelve útil este nivel. Y la evidencia
+confirma que funciona: la mediana de la desviación de alcance contra pares es de \textbf{0.66 en días
+comprometidos frente a $-0.16$ en días normales}.
+
+\subsection{Nivel (d): la novedad del grafo de conexiones}
+
+Queda un último punto ciego, y es el más peligroso: el atacante disciplinado que mantiene volumen
+normal, respeta el horario laboral, no genera fallos y usa protocolo limpio. Lo único que ese
+adversario no puede evitar es tocar máquinas que la cuenta jamás visitó, porque el movimiento lateral
+es, por definición, novedad de conexiones.
+
+Sobre un grafo bipartito acumulado usuario\,$\rightarrow$\,computadora calculo cuatro variables:
+cuántas \textbf{aristas nuevas} abre el día; qué \textbf{fracción} de su actividad representan, que
+distingue «un servidor nuevo» de «casi todo lo de hoy es nuevo»; la \textbf{rareza media} de los
+destinos, ponderando cada uno por lo poco que lo visita el resto de la organización; y cuántas
+\textbf{máquinas origen nuevas} utiliza, que es la otra cara del movimiento lateral.
+
+La regla anti-fuga es aquí especialmente estricta: el grafo de referencia se congela al final del día
+anterior, y la implementación calcula las variables del día \textit{antes} de incorporar sus propios
+eventos al estado acumulado. Además, el primer día activo de cada usuario se neutraliza a cero,
+porque de otro modo todo sería nuevo por construcción y no por conducta.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Variable (mediana)} & \textbf{Día normal} & \textbf{Día comprometido} \\
+\midrule
+Conexiones nuevas abiertas & 0.000 & 1.000 \\
+Fracción de conexiones nuevas & 0.000 & 0.068 \\
+Rareza media de los destinos & 0.044 & 0.133 \\
+Máquinas origen nuevas & 0.000 & 2.000 \\
+Uso como identidad destino & 0.000 & \textbf{20.000} \\
+\bottomrule
+\end{tabular}
+\caption{Separación de clases de las variables de novedad de grafo. Todas discriminan en mediana, y
+la última lo hace de forma inesperadamente marcada.}
+\label{tab:grafo}
+\end{table}
+
+El cuadro \ref{tab:grafo} muestra que las cuatro variables separan las clases en mediana y de forma
+muy limpia. El usuario-día normal \textbf{no abre conexiones nuevas} ---la rutina es rutina---,
+mientras que el día comprometido abre una o más, se autentica desde dos máquinas origen nuevas y
+triplica la rareza media de sus destinos.
+
+La sorpresa está en la última fila. Durante el ataque, la credencial aparece como identidad destino
+de otras identidades unas veinte veces por día, cuando lo normal es que eso no ocurra nunca: es la
+firma de las cadenas de salto del \textit{red team}. Añadí esta variable casi por completitud, y
+resultó de las más discriminantes de todo el conjunto.
+
 \subsection{La regla anti-fuga}
+\label{sec:antifuga}
 
 El error metodológico más probable y costoso en un proyecto con partición temporal y variables
-históricas es la \textbf{fuga de información} del futuro hacia el pasado. Lo traté como una prioridad
-de primer orden y establecí reglas estrictas: toda estadística histórica de la desviación personal se
-calcula desplazando la serie del usuario un día (excluyendo el día evaluado de su propia línea base);
-el grafo de referencia de la novedad se «congela» al día anterior antes de evaluar cada día; el
-modelo de pares se ajusta únicamente con días de entrenamiento; y ninguna variable deriva, directa o
-indirectamente, del archivo de etiquetas. Estas reglas las verifiqué explícitamente, línea por línea,
-mediante una auditoría dedicada del código.
+históricas es la \textbf{fuga de información} del futuro hacia el pasado. Es además un error
+silencioso: no produce ningún fallo visible, sino métricas excelentes que se desmoronan en
+producción. Lo traté como una prioridad de primer orden y establecí cuatro reglas estrictas:
 
-Como ilustración del poder de este diseño, el día del ataque de la cuenta que analicé en el EDA
-presenta un volumen de actividad prácticamente normal (su z-score de volumen es de apenas 0.69, menos
-de una desviación estándar), de modo que un detector de volumen no lo vería. Pero las desviaciones de
-alcance y novedad lo delatan por completo: tocó destinos a 7.7 desviaciones estándar de su línea base
-personal y a 4.5 desviaciones de sus pares conductuales ese mismo día.
+\begin{enumerate}[leftmargin=1.2cm, itemsep=2pt]
+  \item toda estadística histórica de la desviación personal se calcula desplazando la serie del
+        usuario un día, excluyendo el día evaluado de su propia línea base;
+  \item el grafo de referencia de la novedad se congela al día anterior antes de evaluar cada día;
+  \item el modelo de pares se ajusta únicamente con días del conjunto de entrenamiento, de modo que
+        la definición misma de «sus pares» no conoce el futuro;
+  \item ninguna variable deriva, directa o indirectamente, del archivo de etiquetas.
+\end{enumerate}
+
+Estas reglas no las di por supuestas: las verifiqué explícitamente, línea por línea, mediante una
+auditoría dedicada del código. La cuarta merece un matiz, porque conservo el conteo de eventos del
+\textit{red team} por usuario-día para análisis de severidad, pero deliberadamente \textbf{fuera} de
+la lista de variables que consume el modelo. Guardar un dato y permitir que el modelo lo lea son dos
+decisiones distintas, y confundirlas equivale a entrenar con la respuesta.
 
 \subsection{Etiquetado y partición temporal}
 
-Etiqueté cada usuario-día con \texttt{y = 1} si contiene al menos un evento del \textit{red team},
-verificando una cobertura perfecta: los 181 pares (usuario, día) del \textit{ground truth} tienen su
-fila correspondiente en la tabla maestra. La partición es \textbf{temporal estricta}, nunca
-aleatoria: un \textit{k-fold} aleatorio filtraría información porque los días de un mismo usuario
-están autocorrelacionados y las variables históricas cruzarían el corte. Verifiqué además que ambos
-lados de la partición contuvieran días de ataque.
+Etiqueté cada usuario-día con \texttt{y = 1} si contiene al menos un evento del \textit{red team}.
+La verificación relevante aquí es la \textbf{cobertura}: que cada par (usuario, día) del
+\textit{ground truth} tenga su fila correspondiente en la tabla maestra, porque un par perdido sería
+un ataque invisible para el entrenamiento. La cobertura resultó perfecta: los \textbf{181 pares} del
+\textit{ground truth} tienen su fila, sin excepciones. El desbalance queda entonces en 181 de
+47\,956 usuario-días, es decir un 0.38\,\%, aproximadamente uno de cada 265. Este número no es un
+dato ornamental: gobierna directamente el parámetro de re-pesado del modelo supervisado y la elección
+de las métricas de evaluación.
+
+La partición es \textbf{temporal estricta}, nunca aleatoria. Descarté el \textit{k-fold} aleatorio
+por dos razones independientes: los días de un mismo usuario están autocorrelacionados, de modo que
+el modelo aprendería a reconocer usuarios en lugar de generalizar comportamiento; y las variables
+históricas de un día de prueba construido con días de entrenamiento mezclados filtrarían información
+del futuro. Corto en cambio por día calendario, simulando el despliegue real: entrenar con el pasado
+y puntuar el futuro.
+
+Verifiqué además que ambos lados de la partición contuvieran días de ataque, porque sin positivos en
+prueba no habría nada que evaluar. El corte inicial en el día 20 deja 147 usuario-días maliciosos del
+lado de entrenamiento y 34 del lado de prueba, con desbalances comparables de 0.48\,\% y 0.19\,\%
+respectivamente. En la etapa de modelado refino este corte binario en tres conjuntos, separando los
+últimos días del entrenamiento como validación, según se detalla en el cuadro \ref{tab:conjuntos}.
 
 % ────────────────────────────────────────────────────────────────────────────
 \section{Modelado}

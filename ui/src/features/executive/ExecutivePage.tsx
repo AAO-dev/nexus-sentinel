@@ -1,8 +1,8 @@
 /**
  * Vista 3 — Panel ejecutivo (`/executive`).
  *
- * Lo que resuelve: el CISO no hace triage; necesita tendencia de riesgo organizacional, qué rol
- * conductual concentra el riesgo, las cuentas de riesgo sostenido y la eficiencia del SOC para
+ * Lo que resuelve: el CISO no hace triage; necesita tendencia de riesgo organizacional, qué perfil
+ * de cuenta concentra el riesgo, las cuentas de riesgo sostenido y la eficiencia del SOC para
  * justificar inversión. Los KPIs se muestran tal como los mide el backend, sin maquillaje.
  */
 import {
@@ -21,12 +21,7 @@ import { Link } from 'react-router-dom';
 
 import { ErrorState, KpiCard, Loading, RiskBadge, RiskValue } from '../../components/ui';
 import { useOverview, useTriageQueue } from '../../hooks/useApi';
-
-const CLUSTER_COLOR = ['#2a78d6', '#eda100', '#1baf7a', '#4a3aa7'];
-const CLUSTER_NOMBRE: Record<number, string> = {
-  0: 'Cuentas ligeras e intermitentes',
-  1: 'Cuentas pesadas siempre encendidas',
-};
+import { COLOR_PERFIL, nombrePerfil } from '../shared/perfiles';
 
 export default function ExecutivePage() {
   const overview = useOverview();
@@ -38,14 +33,14 @@ export default function ExecutivePage() {
 
   const { tendencia, kpis_soc } = overview.data;
   // El contrato marca este campo como opcional: se normaliza a lista vacía en un solo punto.
-  const tendencia_por_cluster = overview.data.tendencia_por_cluster ?? [];
+  const tendencia_por_perfil = overview.data.tendencia_por_cluster ?? [];
 
-  // Serie por día con una columna por cluster, para graficar la tendencia comparada.
-  const clusters = [...new Set(tendencia_por_cluster.map((p) => p.peer_cluster))].sort();
+  // Serie por día con una columna por perfil, para graficar la tendencia comparada.
+  const perfiles = [...new Set(tendencia_por_perfil.map((p) => p.peer_cluster))].sort();
   const porDia = tendencia.map((t) => {
     const fila: Record<string, number | string> = { dia: `D${t.day}` };
-    for (const c of clusters) {
-      const p = tendencia_por_cluster.find((x) => x.day === t.day && x.peer_cluster === c);
+    for (const c of perfiles) {
+      const p = tendencia_por_perfil.find((x) => x.day === t.day && x.peer_cluster === c);
       if (p) fila[`c${c}`] = p.riesgo_medio;
     }
     return fila;
@@ -54,7 +49,7 @@ export default function ExecutivePage() {
   return (
     <div className="page">
       <h1>Panel ejecutivo</h1>
-      <p className="sub">Riesgo organizacional, concentración por rol conductual y eficiencia del SOC.</p>
+      <p className="sub">Riesgo organizacional, concentración por perfil de cuenta y eficiencia del SOC.</p>
 
       <div className="grid grid-kpis" style={{ marginBottom: 20 }}>
         <KpiCard label="Riesgo organizacional" value={overview.data.riesgo_organizacional.toFixed(2)}
@@ -70,7 +65,7 @@ export default function ExecutivePage() {
 
       <div className="grid grid-2">
         <div className="card">
-          <h2>Tendencia de riesgo por rol conductual</h2>
+          <h2>Tendencia de riesgo por perfil de cuenta</h2>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={porDia} margin={{ top: 8, right: 12, bottom: 4, left: -18 }}>
               <CartesianGrid stroke="#e1e0d9" strokeDasharray="3 3" vertical={false} />
@@ -78,15 +73,16 @@ export default function ExecutivePage() {
               <YAxis tick={{ fontSize: 11, fill: '#898781' }} tickLine={false} axisLine={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e1e0d9' }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              {clusters.map((c, i) => (
-                <Line key={c} type="monotone" dataKey={`c${c}`} name={CLUSTER_NOMBRE[c] ?? `Cluster ${c}`}
-                      stroke={CLUSTER_COLOR[i % CLUSTER_COLOR.length]} strokeWidth={2} dot={false} />
+              {perfiles.map((c, i) => (
+                <Line key={c} type="monotone" dataKey={`c${c}`} name={nombrePerfil(c)}
+                      stroke={COLOR_PERFIL[i % COLOR_PERFIL.length]} strokeWidth={2} dot={false} />
               ))}
             </LineChart>
           </ResponsiveContainer>
           <p className="hint">
-            Los roles no vienen de un organigrama (los datos están desidentificados): se descubren
-            por comportamiento con KMeans. Sirven para saber qué perfil concentra el riesgo.
+            Las cuentas se agrupan por cómo se comportan —cuántas máquinas tocan, con qué volumen y
+            en qué horario—, no por su puesto: los datos están anonimizados y no hay organigrama.
+            Sirve para ver qué tipo de cuenta concentra el riesgo.
           </p>
         </div>
 
@@ -103,8 +99,8 @@ export default function ExecutivePage() {
             </BarChart>
           </ResponsiveContainer>
           <p className="hint">
-            Los umbrales están calibrados a la capacidad operativa del SOC, no a números arbitrarios:
-            el volumen diario debe caber en la jornada del equipo.
+            El corte para generar una alerta se fijó según lo que el equipo puede revisar en un día,
+            no con un número arbitrario: el volumen diario debe caber en la jornada.
           </p>
         </div>
       </div>

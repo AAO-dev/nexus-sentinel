@@ -49,6 +49,9 @@ FEATURE_LABELS = {
     "ratio_auth_type_nulo": "Tipo de auth desconocido", "z_amplitud_horaria": "Amplitud horaria vs. su base",
     "n_src_computers": "Máquinas origen", "z_n_src_computers": "Máquinas origen vs. su base",
     "n_logoffs": "Cierres de sesión", "es_dia_no_laboral": "Día no laboral",
+    "ratio_dst_por_evento": "Destinos por autenticación",
+    "ratio_max_amplitud_horaria": "Amplitud horaria vs. su máximo",
+    "z_peer_ratio_ntlm": "NTLM vs. sus pares",
 }
 
 
@@ -193,7 +196,14 @@ def motivo_una_linea(shap_top: list[dict], row: pd.Series) -> str:
     if f == "n_uso_como_identidad_destino":
         return f"usada como destino {int(row[f])} veces (cadenas de salto)"
     if f.startswith("z_"):
-        return f"{human_label(f)}: {row[f]:+.1f}σ sobre lo normal"
+        z = float(row[f])
+        if abs(z) < 1:
+            return f"{human_label(f)}: dentro de lo normal"
+        if z > 0:
+            grado = "muy por encima" if z >= 3 else "por encima"
+        else:
+            grado = "muy por debajo" if z <= -3 else "por debajo"
+        return f"{human_label(f)}: {grado} de lo normal"
     return f"{human_label(f)}: señal dominante"
 
 

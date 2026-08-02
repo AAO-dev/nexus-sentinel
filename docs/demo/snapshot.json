@@ -2059,7 +2059,7 @@
       "level": "verde",
       "dia_pico": 29,
       "n_dias_alerta": 0,
-      "motivo": "Fallos vs. sus pares: -0.1σ sobre lo normal",
+      "motivo": "Fallos vs. sus pares: dentro de lo normal",
       "es_comprometida": 0
     },
     {
@@ -32718,7 +32718,7 @@
             },
             {
               "feature": "ratio_max_amplitud_horaria",
-              "label": "ratio max amplitud horaria",
+              "label": "Amplitud horaria vs. su máximo",
               "contribucion": -0.275,
               "valor": 0.565,
               "promedio_personal": 0.457,
@@ -33496,7 +33496,7 @@
             },
             {
               "feature": "ratio_dst_por_evento",
-              "label": "ratio dst por evento",
+              "label": "Destinos por autenticación",
               "contribucion": -0.251,
               "valor": 0.002,
               "promedio_personal": 0.001,
@@ -38187,7 +38187,7 @@
             },
             {
               "feature": "ratio_dst_por_evento",
-              "label": "ratio dst por evento",
+              "label": "Destinos por autenticación",
               "contribucion": -0.235,
               "valor": 0.012,
               "promedio_personal": 0.019,
@@ -46042,7 +46042,7 @@
             },
             {
               "feature": "ratio_max_amplitud_horaria",
-              "label": "ratio max amplitud horaria",
+              "label": "Amplitud horaria vs. su máximo",
               "contribucion": -0.275,
               "valor": 0.391,
               "promedio_personal": 0.466,
@@ -46603,7 +46603,7 @@
             },
             {
               "feature": "ratio_dst_por_evento",
-              "label": "ratio dst por evento",
+              "label": "Destinos por autenticación",
               "contribucion": -0.266,
               "valor": 0.013,
               "promedio_personal": 0.017,
@@ -47989,7 +47989,7 @@
             },
             {
               "feature": "ratio_max_amplitud_horaria",
-              "label": "ratio max amplitud horaria",
+              "label": "Amplitud horaria vs. su máximo",
               "contribucion": -0.275,
               "valor": 0.615,
               "promedio_personal": 0.436,
@@ -54450,7 +54450,7 @@
             },
             {
               "feature": "z_peer_ratio_ntlm",
-              "label": "z peer ratio ntlm",
+              "label": "NTLM vs. sus pares",
               "contribucion": -0.27,
               "valor": 0.123,
               "promedio_personal": 0.041,
@@ -58532,7 +58532,7 @@
             },
             {
               "feature": "ratio_dst_por_evento",
-              "label": "ratio dst por evento",
+              "label": "Destinos por autenticación",
               "contribucion": -0.291,
               "valor": 0.007,
               "promedio_personal": 0.011,
@@ -61142,7 +61142,7 @@
             },
             {
               "feature": "ratio_max_amplitud_horaria",
-              "label": "ratio max amplitud horaria",
+              "label": "Amplitud horaria vs. su máximo",
               "contribucion": -0.275,
               "valor": 0.5,
               "promedio_personal": 0.436,

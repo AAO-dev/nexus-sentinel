@@ -50,7 +50,7 @@ export function EgoGraphMini({ ego, employeeId }: { ego: EgoGraph; employeeId: s
       </div>
       <p className="hint">
         Histórico total del usuario: {ego.n_historicos_totales} destinos distintos.
-        {ego.conocidos_truncados && ' La lista de conocidos se recortó para mantener el grafo legible.'}
+        {ego.conocidos_truncados && ' La lista de conocidos se recortó para mantener el mapa legible.'}
       </p>
     </div>
   );

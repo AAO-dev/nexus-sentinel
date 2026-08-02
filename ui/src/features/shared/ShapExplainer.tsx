@@ -36,22 +36,22 @@ export function ShapExplainer({ data }: { data: Explicacion }) {
             </div>
             <div className="shap-cmp">
               <span>
-                hoy <b>{fmt(s.valor)}</b>
+                este día <b>{fmt(s.valor)}</b>
               </span>
               <span>
-                su promedio <b>{fmt(s.promedio_personal)}</b>
+                lo habitual en la cuenta <b>{fmt(s.promedio_personal)}</b>
               </span>
               <span>
-                sus pares <b>{fmt(s.promedio_peer)}</b>
+                cuentas similares <b>{fmt(s.promedio_peer)}</b>
               </span>
             </div>
           </div>
         );
       })}
       <p className="hint">
-        Contribución positiva (rojo) empuja hacia compromiso; negativa (azul) hacia comportamiento
-        normal. La comparación contra su propio promedio y contra sus pares es lo que distingue una
-        anomalía real de un usuario naturalmente intenso.
+        En rojo, lo que aumenta la sospecha; en azul, lo que la reduce. Comparar el día contra lo
+        habitual de la cuenta y contra cuentas que se comportan parecido es lo que distingue algo
+        realmente fuera de lugar de un usuario que sencillamente trabaja mucho.
       </p>
     </div>
   );

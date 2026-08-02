@@ -3,7 +3,7 @@
  *
  * Lo que resuelve: el analista SOC Tier 2 no necesita más alertas, necesita una cola corta,
  * priorizada y explicada. Aquí ve los KPIs, la cola ordenada por riesgo con el motivo en una línea,
- * y al seleccionar un usuario obtiene su evolución, la explicación SHAP del día y las acciones.
+ * y al seleccionar un usuario obtiene su evolución, la evidencia del día y las acciones.
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -37,8 +37,8 @@ export default function TriagePage() {
     <div className="page">
       <h1>Consola de triage</h1>
       <p className="sub">
-        Cola priorizada por riesgo de uso indebido de credenciales. Ninguna puntuación se muestra sin
-        su explicación.
+        Cola priorizada por riesgo de uso indebido de credenciales. Cada caso llega con la evidencia
+        que lo justifica.
       </p>
 
       {overview.isLoading && <Loading rows={2} />}
@@ -93,8 +93,8 @@ export default function TriagePage() {
             </table>
           )}
           <p className="hint">
-            El riesgo mostrado es el máximo del periodo. Selecciona un usuario para ver su evolución
-            y la explicación del día que disparó la alerta.
+            El riesgo mostrado es el más alto que alcanzó la cuenta en el periodo. Selecciona un
+            usuario para ver su evolución y la evidencia del día que disparó la alerta.
           </p>
         </div>
 
@@ -107,14 +107,14 @@ export default function TriagePage() {
             {serie.data && <RiskTimeline serie={serie.data} selected={dia} onSelect={setDia} />}
             {serie.data && (
               <p className="hint">
-                Cada punto es un usuario-día; el color indica su nivel. Haz clic en un punto para
-                explicar ese día.
+                Cada punto es un día de esta cuenta; el color indica su nivel. Haz clic en un punto
+                para ver la evidencia de ese día.
               </p>
             )}
           </div>
 
           <div className="card">
-            <h2>Por qué el modelo lo señaló {dia !== undefined ? `— día ${dia}` : ''}</h2>
+            <h2>Qué disparó la alerta {dia !== undefined ? `— día ${dia}` : ''}</h2>
             {!sel && <Empty>Sin usuario seleccionado.</Empty>}
             {sel && explicacion.isLoading && <Loading rows={5} />}
             {sel && explicacion.isError && <ErrorState error={explicacion.error} />}

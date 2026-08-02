@@ -2,14 +2,16 @@
  * Vista 2 — Investigación (`/employee/:id`).
  *
  * Lo que resuelve: cuando el analista decide profundizar, necesita ver la actividad del día, cómo
- * se compara contra su línea base personal y contra su peer group, y sobre todo el mini-grafo ego
- * que hace visible el movimiento lateral. Aquí también queda el historial de decisiones.
+ * se compara contra la actividad habitual de esa cuenta y contra cuentas similares, y sobre todo
+ * el mapa de conexiones que hace visible el movimiento lateral. Aquí también queda el historial
+ * de decisiones.
  */
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 
 import { Empty, ErrorState, KpiCard, Loading, RiskBadge, RiskValue } from '../../components/ui';
 import { useActivity, useEmployeeRisk, useExplanation } from '../../hooks/useApi';
 import { ActionBar } from '../shared/ActionBar';
+import { descripcionPerfil } from '../shared/perfiles';
 import { RiskTimeline } from '../shared/RiskTimeline';
 import { ShapExplainer } from '../shared/ShapExplainer';
 import { DestinosChips, EgoGraphMini } from './EgoGraphMini';
@@ -39,7 +41,7 @@ export default function InvestigationPage() {
       </p>
       <h1>Investigación — {id}</h1>
       <p className="sub">
-        Actividad de autenticación, comparativa contra su línea base y grafo de conexiones
+        Actividad de autenticación, comparación contra su actividad habitual y mapa de conexiones
         {dia !== undefined ? ` · día ${dia}` : ''}.
       </p>
 
@@ -63,7 +65,7 @@ export default function InvestigationPage() {
 
       <div className="grid grid-2">
         <div className="card">
-          <h2>Grafo de conexiones del día</h2>
+          <h2>Mapa de conexiones del día</h2>
           {!dia && <Empty>Sin día seleccionado.</Empty>}
           {dia !== undefined && actividad.isLoading && <Loading rows={4} />}
           {dia !== undefined && actividad.isError && <ErrorState error={actividad.error} />}
@@ -92,14 +94,14 @@ export default function InvestigationPage() {
             {serie.data && <RiskTimeline serie={serie.data} selected={dia} onSelect={seleccionarDia} />}
             {serie.data && (
               <p className="hint">
-                Peer group conductual: cluster {serie.data.peer_cluster}. Haz clic en un punto para
-                cambiar el día investigado.
+                Perfil de la cuenta: {descripcionPerfil(serie.data.peer_cluster)}. Haz clic en un
+                punto para cambiar el día investigado.
               </p>
             )}
           </div>
 
           <div className="card">
-            <h2>Comparativa vs. su base y sus pares</h2>
+            <h2>Qué se salió de lo normal</h2>
             {dia !== undefined && explicacion.isLoading && <Loading rows={4} />}
             {dia !== undefined && explicacion.isError && <ErrorState error={explicacion.error} />}
             {explicacion.data && (

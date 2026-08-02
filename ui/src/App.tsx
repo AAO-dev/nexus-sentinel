@@ -25,7 +25,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">Nexus <span>Sentinel</span></div>
+        <div className="brand">
+          {/* El isotipo es decorativo: el nombre ya va en texto al lado, así que alt vacío
+              evita que el lector de pantalla lo lea dos veces. */}
+          <img src="/favicon.svg" alt="" className="brand-logo" />
+          <span className="brand-text">Nexus <span>Sentinel</span></span>
+        </div>
         <nav className="nav">
           <NavLink to="/triage" className={({ isActive }) => (isActive ? 'active' : '')}>Triage</NavLink>
           <NavLink to="/executive" className={({ isActive }) => (isActive ? 'active' : '')}>Ejecutivo</NavLink>

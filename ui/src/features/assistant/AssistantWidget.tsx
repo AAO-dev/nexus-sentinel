@@ -61,7 +61,7 @@ export function AssistantWidget() {
         <div className="chat" role="dialog" aria-label="Asistente de Nexus Sentinel">
           <div className="chat-head">
             <strong>Asistente</strong>
-            <span>{salud.data?.disponible ? salud.data.modelo : 'guía'}</span>
+            <span>{salud.data?.disponible ? 'en línea' : 'guía'}</span>
           </div>
 
           <div className="chat-body">
