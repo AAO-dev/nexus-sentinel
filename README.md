@@ -11,7 +11,8 @@ comportamiento de autenticación de cada usuario, sobre datos reales de una red 
 | 🖥️ **Interfaz en vivo** | https://nexus-sentinel-iota.vercel.app |
 | ⚙️ **API (documentación interactiva)** | https://nexus-sentinel-api-2m8a.onrender.com/docs |
 | 📓 **Notebook reproducible** | [`notebook/ueba_lanl_nexus_sentinel.ipynb`](notebook/ueba_lanl_nexus_sentinel.ipynb) |
-| 📄 **Documento final** | [`docs/entregables/`](docs/entregables/) |
+| 📄 **Documento final** | [`docs/entregables/Documento - Nexus Sentinel.pdf`](docs/entregables/) |
+| 🎤 **Presentación y guion** | [`docs/entregables/Presentacion - Nexus Sentinel.pdf`](docs/entregables/) |
 
 > **Nota sobre la primera carga:** el backend está desplegado en un plan gratuito que suspende el
 > servicio tras 15 minutos de inactividad. La primera petición puede tardar hasta 50 segundos en
@@ -168,7 +169,7 @@ Modelado ──► artefactos serializados (XGBoost, IF, K-Means, explicador SHA
 Inferencia ──► snapshot.json  ◄── el puente entre el modelo y la interfaz
       │
       ▼
-API FastAPI (10 rutas, contrato OpenAPI) ──► UI React (3 vistas + asistente)
+API FastAPI (11 rutas, contrato OpenAPI) ──► UI React (3 vistas + asistente)
 ```
 
 **División de responsabilidades:** el backend es dueño de todo el conocimiento del modelo
@@ -180,102 +181,177 @@ Los tipos TypeScript se generan del contrato OpenAPI, de modo que un cambio en l
 
 | Vista | Usuario objetivo | Contenido |
 |---|---|---|
-| `/triage` | Analista SOC | Cola priorizada, evolución del riesgo, explicación SHAP, acciones |
-| `/employee/:id` | Analista SOC | Actividad del día, comparativa vs. base y pares, **mini-grafo de conexiones** |
-| `/executive` | CISO | Tendencia por rol conductual, cuentas críticas, eficiencia del equipo |
+| `/triage` | Analista SOC | Cola priorizada, evolución del riesgo, panel «Qué disparó la alerta», acciones |
+| `/employee/:id` | Analista SOC | Actividad del día, qué se salió de lo normal, **mapa de conexiones** |
+| `/executive` | CISO | Tendencia por perfil de cuenta, cuentas críticas, eficiencia del equipo |
 
 Incluye un **asistente conversacional** que responde preguntas en lenguaje natural consultando los
 datos reales del modelo mediante *function calling* (no genera cifras inventadas).
+
+**Lenguaje de la interfaz:** el usuario final es el analista de un SOC, no un científico de datos.
+La interfaz habla de conducta observable y evidencia —«qué disparó la alerta», «lo habitual en la
+cuenta», «cuentas similares»—, y deja los términos del método (SHAP, K-Means, modelo supervisado)
+para esta documentación y el documento final, donde sí corresponden.
 
 ## Estructura del repositorio
 
 ```
 nexus-sentinel/
-├── notebook/          Notebook reproducible de punta a punta (narra e importa src/)
-├── src/
-│   ├── data.py        Descarga en streaming, lectura por chunks, muestreo, Parquet
-│   ├── eda.py         Análisis exploratorio, inferencia del ciclo circadiano, figuras
-│   ├── features.py    Variables crudas, desviación personal y grupal, etiquetado, partición
-│   ├── graph.py       Grafo usuario→computadora y variables de novedad
-│   ├── models.py      Isolation Forest, K-Means, XGBoost, evaluación y estabilidad
-│   ├── inference.py   Puntuación 0-100, SHAP local, generación del snapshot
-│   └── assistant.py   Asistente conversacional (function calling)
-├── api/               Backend FastAPI + pruebas de contrato
-├── ui/                Frontend React (Vite + TypeScript)
-├── docs/
-│   ├── eda/           Figuras del análisis exploratorio
-│   ├── modeling/      Figuras de evaluación y SHAP
-│   ├── demo/          snapshot.json (datos que sirve la API)
-│   └── entregables/   Documento final, presentación y guion
-└── models/            Artefactos serializados (no versionados; se regeneran)
+├── README.md                      Este documento
+├── DEPLOY.md                      Despliegue paso a paso (Render + Vercel)
+├── requirements.txt               Dependencias de Python del pipeline
+│
+├── notebook/
+│   └── ueba_lanl_nexus_sentinel.ipynb   Narrativa completa de punta a punta; importa src/
+│
+├── src/                           Código de producción (lo reutilizan el notebook y la API)
+│   ├── data.py                    Descarga en streaming, lectura por chunks, muestreo, Parquet
+│   ├── eda.py                     Exploración, inferencia del ciclo circadiano, figuras 1-3
+│   ├── features.py                Variables crudas, desviación personal y grupal, etiquetado
+│   ├── graph.py                   Grafo usuario→computadora y variables de novedad
+│   ├── models.py                  Isolation Forest, K-Means, XGBoost, evaluación, estabilidad
+│   ├── inference.py               Puntuación 0-100, SHAP local, generación del snapshot
+│   └── assistant.py               Asistente conversacional (function calling)
+│
+├── api/                           Backend FastAPI
+│   ├── main.py                    11 rutas, esquemas Pydantic, contrato OpenAPI
+│   ├── requirements.txt           Dependencias del backend (subconjunto ligero)
+│   ├── Dockerfile                 Imagen que se despliega en Render
+│   └── tests/test_api.py          23 pruebas de contrato
+│
+├── ui/                            Frontend React (Vite + TypeScript)
+│   ├── src/api/                   Cliente tipado y schema.d.ts generado del OpenAPI
+│   ├── src/features/              Las 3 vistas + asistente + componentes compartidos
+│   └── public/                    Logotipo e iconos
+│
+├── intro-demo/                    Apertura de la demostración: el caso Target (React, local)
+│
+├── data/
+│   ├── raw/redteam.txt.gz         Verdad de terreno original (8 KB, versionada)
+│   └── work/                      Derivados versionados del muestreo:
+│       ├── user_day_features.parquet    Tabla maestra 47,956 × 61 (5.1 MB)
+│       ├── redteam.parquet              Etiquetas normalizadas
+│       ├── sample_metadata.json         Trazabilidad del muestreo
+│       └── features_metadata.json       Trazabilidad de las variables
+│
+├── models/                        Artefactos entrenados, VERSIONADOS (2.2 MB en total)
+│   ├── fase4_artefactos.joblib    XGBoost calibrado, Isolation Forest, explicador SHAP
+│   ├── inference_bundle.joblib    Umbrales y metadatos de la puntuación de riesgo
+│   └── peer_kmeans.joblib         Modelo de perfiles de cuenta
+│
+└── docs/
+    ├── eda/                       Figuras 1-3 del análisis exploratorio
+    ├── modeling/                  Figuras 4-5 (evaluación y SHAP)
+    ├── demo/snapshot.json         Datos que sirve la API (1.6 MB)
+    └── entregables/               Documento final, presentación, guion y fuente LaTeX
 ```
 
-## Ejecución local
+> **Lo único que no está en el repositorio** es `data/work/auth_sample.parquet` (200 MB, los eventos
+> muestreados) por exceder el límite de tamaño de GitHub. Vive como adjunto de la
+> [*release* v1.0](https://github.com/AAO-dev/nexus-sentinel/releases) y **el notebook lo descarga
+> solo**. Todo lo demás —tabla de variables, modelos entrenados, snapshot y verdad de terreno— está
+> versionado.
 
-### Requisitos
-Python 3.11, Node.js 18+
+## Cómo reproducir el proyecto
 
-### 1 · Entorno y dependencias
+**Requisitos:** Python 3.11 y Node.js 18 o superior.
+
+### Qué necesitas descargar según lo que quieras reproducir
+
+El repositorio versiona los artefactos intermedios precisamente para que **no haga falta descargar
+nada pesado** salvo que quieras rehacer el muestreo desde la fuente original:
+
+| Quiero reproducir… | Necesito descargar | Tiempo aproximado |
+|---|---|---|
+| **Modelado, inferencia, API e interfaz** | Nada, todo está en el repositorio | Minutos |
+| **Análisis exploratorio e ingeniería de variables** | `auth_sample.parquet` (200 MB), que el notebook baja solo | ~1 minuto de descarga |
+| **El muestreo desde cero** | `auth.txt.gz` (7.2 GB) desde csr.lanl.gov, vía `src/data.py` | 1–2 horas |
+
+### 1 · Clonar e instalar
 
 ```bash
+git clone https://github.com/AAO-dev/nexus-sentinel.git
+cd nexus-sentinel
 python -m venv .venv
-.venv\Scripts\activate          # Windows;  source .venv/bin/activate en Linux/macOS
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2 · Reproducir el análisis
+En Linux o macOS, la tercera línea es `source .venv/bin/activate`.
 
-El notebook ofrece dos rutas: regeneración completa desde la fuente (descarga 7.2 GB, ~1-2 h) o
-carga del Parquet de trabajo ya muestreado (ruta por defecto, rápida). **La ruta rápida descarga
-automáticamente** el conjunto de trabajo desde los archivos adjuntos de la
-[versión publicada](https://github.com/AAO-dev/nexus-sentinel/releases), de modo que el notebook
-puede ejecutarse desde un entorno limpio de Google Colab.
+### 2 · Ejecutar el notebook
+
+Es el recorrido completo y narrado: datos, exploración, variables, modelado, inferencia y API.
 
 ```bash
 jupyter notebook notebook/ueba_lanl_nexus_sentinel.ipynb
 ```
 
-**Disponibilidad de los datos y artefactos:**
+Ofrece dos rutas y la elección está explicada dentro. La **ruta rápida** (por defecto) descarga sola
+`auth_sample.parquet` desde la [*release* v1.0](https://github.com/AAO-dev/nexus-sentinel/releases),
+por lo que **corre tal cual en un Google Colab limpio** sin credenciales ni configuración previa. La
+**ruta larga** regenera el muestreo desde el archivo original de LANL.
 
-| Archivo | Tamaño | Dónde vive |
-|---|---|---|
-| `auth_sample.parquet` (eventos muestreados) | 200 MB | Adjunto de la *release* (lo descarga el notebook) |
-| `user_day_features.parquet` (tabla de variables) | 5.1 MB | En el repositorio |
-| `redteam.parquet` + metadatos del muestreo | < 100 KB | En el repositorio |
-| `models/*.joblib` (modelos entrenados y explicador SHAP) | 2.2 MB | En el repositorio |
-| `auth.txt.gz` (fuente original) | 7.2 GB | Se descarga de csr.lanl.gov con `src/data.py` |
+### 3 · Ejecutar el pipeline por módulos
 
-Gracias a esto, las fases de **modelado e inferencia se pueden re-ejecutar sin descargar nada**;
-solo las fases de adquisición y análisis exploratorio requieren el Parquet de 200 MB.
-
-También puede ejecutarse el pipeline por módulos:
+Alternativa al notebook, útil para regenerar un artefacto concreto. Cada módulo escribe sus salidas
+y puede correrse por separado siempre que existan las entradas del anterior:
 
 ```bash
-python -m src.data        # descarga y muestreo
-python -m src.eda         # análisis exploratorio y figuras
-python -m src.features    # tabla maestra de variables
-python -m src.models      # entrenamiento, evaluación y estabilidad
-python -m src.inference   # snapshot para la interfaz
+python -m src.data        # muestreo             → data/work/auth_sample.parquet
+python -m src.eda         # figuras 1-3          → docs/eda/
+python -m src.features    # tabla maestra        → data/work/user_day_features.parquet, models/peer_kmeans.joblib
+python -m src.models      # entrenamiento        → models/fase4_artefactos.joblib, docs/modeling/
+python -m src.inference   # snapshot y umbrales  → docs/demo/snapshot.json, models/inference_bundle.joblib
 ```
 
-### 3 · Backend
+### 4 · Levantar el backend
 
 ```bash
-uvicorn api.main:app --port 8000        # documentación en http://localhost:8000/docs
-pytest api/tests -q                     # 23 pruebas de contrato
+uvicorn api.main:app --port 8000
 ```
 
-Para habilitar el asistente conversacional, define la variable de entorno `DEEPSEEK_API_KEY`.
+La documentación interactiva queda en http://localhost:8000/docs. Sirve el snapshot ya versionado,
+así que **funciona sin haber entrenado nada**. Para verificar el contrato:
 
-### 4 · Frontend
+```bash
+pytest api/tests -q
+```
+
+El asistente conversacional requiere la variable de entorno `DEEPSEEK_API_KEY`; sin ella la API
+responde `503` en esa ruta y el resto del sistema sigue funcionando con normalidad.
+
+### 5 · Levantar la interfaz
 
 ```bash
 cd ui
 npm install
-npm run dev                             # http://localhost:5173
+npm run dev
 ```
 
-En desarrollo, las peticiones a `/api` se redirigen automáticamente al backend local.
+Queda en http://localhost:5173. En desarrollo las peticiones a `/api` se redirigen solas al backend
+local, de modo que no hay que configurar variables de entorno.
+
+### 6 · Apertura de la demostración (opcional)
+
+Página local que presenta el caso Target antes de mostrar la consola. No se despliega ni depende de
+la API:
+
+```bash
+cd intro-demo
+npm install
+npm run dev
+```
+
+Queda en http://localhost:5174, en un puerto distinto para poder tenerla abierta junto a la consola.
+
+### Verificar que todo quedó bien
+
+```bash
+pytest api/tests -q          # 23 pruebas de contrato del backend
+cd ui && npm run typecheck   # tipos del frontend contra el contrato OpenAPI
+cd ui && npm run build       # compilación de producción
+```
 
 ## Despliegue
 

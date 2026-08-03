@@ -29,6 +29,11 @@ ui/dist/
 ui/.env
 ui/*.tsbuildinfo
 
+# Apertura de la demostración (corre en local)
+intro-demo/node_modules/
+intro-demo/dist/
+intro-demo/*.tsbuildinfo
+
 # Herramientas de construcción de entregables
 docs/entregables/node_modules/
 docs/entregables/package-lock.json

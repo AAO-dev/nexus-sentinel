@@ -3,7 +3,8 @@
 Guion para los dos entregables hablados: el **video** (5 min máx., cámara + diapositivas) y la
 **demo en vivo** (5 min, pantalla compartida).
 
-- **Diapositivas:** `Presentacion_Nexus_Sentinel.pptx` (12 slides)
+- **Diapositivas:** `Presentacion - Nexus Sentinel.pdf` (12 slides)
+- **Apertura de la demo:** `intro-demo/` — página local del caso Target (`npm run dev` → localhost:5174)
 - **Interfaz:** https://nexus-sentinel-iota.vercel.app
 - **API:** https://nexus-sentinel-api-2m8a.onrender.com
 
@@ -21,8 +22,10 @@ Guion para los dos entregables hablados: el **video** (5 min máx., cámara + di
 2. **Deja la interfaz abierta y navegada una vez** (Triage → un usuario → Ejecutivo), para que la
    caché ya tenga los datos y todo cargue instantáneo.
 3. **Prueba el asistente una vez** (botón 💬) para confirmar que responde.
-4. Cierra pestañas y notificaciones; pon el navegador en pantalla completa (F11).
-5. Ten a mano el usuario estrella: **U-0737** — está en la **posición #1** de la cola y **es una
+4. **Levanta la página de apertura** si vas a usarla en la demo en vivo: `cd intro-demo && npm run dev`
+   y déjala cargada en una pestaña aparte (localhost:5174). Corre en local, no depende de internet.
+5. Cierra pestañas y notificaciones; pon el navegador en pantalla completa (F11).
+6. Ten a mano el usuario estrella: **U-0737** — está en la **posición #1** de la cola y **es una
    cuenta realmente comprometida**. Lee la nota siguiente sobre qué día usar para qué.
 
 ### 📌 Nota importante sobre el caso U-0737 (léela antes de grabar)
@@ -32,7 +35,7 @@ Guion para los dos entregables hablados: el **video** (5 min máx., cámara + di
 | Posición en la cola | **#1** | Tu titular: lo más riesgoso del periodo es un compromiso real |
 | ¿Cuenta comprometida de verdad? | **Sí** | Puedes afirmarlo con seguridad |
 | Días en alerta | 7 | Muestra que no fue un pico aislado |
-| **Día 23** (riesgo 98) | Mejor **explicación SHAP**: NTLM 16 % vs. 1.7 % personal vs. 1.3 % pares | Úsalo para el panel SHAP |
+| **Día 23** (riesgo 98) | Mejor **evidencia**: NTLM 16 % vs. 1.7 % habitual vs. 1.3 % cuentas similares | Úsalo para el panel «Qué disparó la alerta» |
 | **Días 20, 22, 26, 27, 29** | Días con **evento confirmado** del red team (riesgos 17 a 74) | Úsalos si te preguntan por la verdad de terreno |
 | Grafo ego (día 23) | 6 destinos nuevos de 64 | **No prometas una explosión de nodos rojos**: son 6. Descríbelo como "seis máquinas que nunca había tocado" |
 
@@ -118,19 +121,19 @@ no diapositivas. Aproximadamente 700 palabras habladas.
 - **[Acción] Haz clic en la fila de U-0737** (riesgo 98, la primera).
 
 > Al seleccionar el caso más grave, el sistema me muestra la evolución de su riesgo y, sobre todo,
-> **por qué** lo señaló. Ninguna puntuación viaja sin su explicación.
+> **qué disparó la alerta**. Ninguna puntuación viaja sin su evidencia.
 
-- **[Acción] Señala el panel SHAP, en particular la fila "Ratio NTLM".**
+- **[Acción] Señala el panel «Qué disparó la alerta», en particular la fila "Ratio NTLM".**
 
-> Aquí está la clave de la usabilidad: no me dice solo "NTLM alto". Me dice que **hoy** usó NTLM en
-> el dieciséis por ciento de sus autenticaciones, cuando **su propio promedio** es del uno punto
-> siete, y **el de sus compañeros de rol**, uno punto tres. Diez veces por encima de lo normal, en
+> Aquí está la clave de la usabilidad: no me dice solo "NTLM alto". Me dice que **este día** usó NTLM
+> en el dieciséis por ciento de sus autenticaciones, cuando **lo habitual en esa cuenta** es el uno
+> punto siete, y en **cuentas similares**, uno punto tres. Diez veces por encima de lo normal, en
 > ambas referencias. Con eso el analista decide en segundos.
 
 - **[Acción] Clic en "Ver investigación completa" (o navega a `/employee/U-0737`).**
 
-> Si necesito profundizar, la vista de investigación me da la actividad del día y este **mini-grafo
-> de conexiones**: en gris las máquinas que la cuenta ya conocía, **en rojo las que tocó por primera
+> Si necesito profundizar, la vista de investigación me da la actividad del día y este **mapa de
+> conexiones**: en gris las máquinas que la cuenta ya conocía, **en rojo las que tocó por primera
 > vez**. Aquí veo seis máquinas que esta cuenta jamás había visitado. Ese es el movimiento lateral
 > hecho visible: el mismo patrón que en Target pasó desapercibido tres semanas.
 
@@ -142,8 +145,8 @@ no diapositivas. Aproximadamente 700 palabras habladas.
 
 - **[Acción] Mientras responde, cambia a `/executive`.**
 
-> Finalmente, la vista ejecutiva, para el CISO: la tendencia de riesgo por rol de comportamiento y
-> la eficiencia del equipo de seguridad.
+> Finalmente, la vista ejecutiva, para el CISO: la tendencia de riesgo por perfil de cuenta y la
+> eficiencia del equipo de seguridad.
 
 ### Bloque 5 · Valor y cierre (4:15 – 5:00) — Slides 11 y 12
 
@@ -169,12 +172,29 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 
 ### 0:00 – 0:45 · El reto, en 45 segundos
 
-> Buenas tardes. Mi proyecto es **Nexus Sentinel**: detecta el uso indebido de credenciales
-> legítimas, el mismo problema que en 2013 le costó a Target más de doscientos millones de dólares
-> cuando robaron la cuenta de un proveedor y se movieron por su red durante tres semanas sin que
-> nadie lo notara. El reto técnico es que cada autenticación individual es válida: la señal solo
-> existe en el patrón de comportamiento. Trabajé con datos reales de Los Álamos: mil millones de
-> eventos y un desbalance de un caso malicioso por cada doscientos sesenta y cinco.
+- **[Acción] Abre la pestaña de la apertura (localhost:5174).** Empieza arriba: el titular y las
+  cuatro cifras caben en pantalla sin bajar.
+
+> Buenas tardes. Mi proyecto es **Nexus Sentinel**, y para explicar qué resuelve empiezo con un caso
+> real. En 2013 Target sufrió una de las brechas más costosas de la historia: cuarenta millones de
+> tarjetas, setenta millones de clientes y más de doscientos millones de dólares en pérdidas.
+
+- **[Acción] Baja a «Cómo ocurrió» y detente en el paso 2.**
+
+> No hubo ningún exploit. Robaron la credencial de un proveedor de aire acondicionado y con esa
+> cuenta legítima se movieron por la red hasta las cajas registradoras, tres semanas sin que nadie
+> lo notara. El detalle clave está aquí: **cada autenticación, por separado, era válida**.
+
+- **[Acción] Baja a «Por qué nadie lo detuvo a tiempo».**
+
+> Hubo dos fallas: las alertas existían pero se ahogaron sin priorizar, y la anomalía no estaba en
+> ningún evento sino en el patrón. Nexus Sentinel ataca esas dos, y lo hago con datos reales de Los
+> Álamos: mil millones de eventos, con un desbalance de un caso malicioso por cada doscientos
+> sesenta y cinco.
+
+- **[Acción] Cambia a la pestaña de la consola (`/triage`).**
+
+> Esto es lo que un analista habría visto ese día.
 
 ### 0:45 – 2:00 · Vista 1: Triaje (el flujo del analista)
 
@@ -188,11 +208,11 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 > Selecciono el caso más grave: riesgo noventa y ocho, nivel rojo. El sistema me muestra su
 > evolución en el tiempo y la explicación del día que disparó la alerta.
 
-- **[Acción] Recorre el panel SHAP.**
+- **[Acción] Recorre el panel «Qué disparó la alerta».**
 
-> Y esta comparación triple es el corazón de la usabilidad: el valor de hoy, contra su propio
-> histórico, contra sus pares de comportamiento. NTLM al dieciséis por ciento cuando él promedia
-> uno punto siete y su grupo uno punto tres.
+> Y esta comparación triple es el corazón de la usabilidad: el valor de **este día**, contra **lo
+> habitual en la cuenta**, contra **cuentas similares**. NTLM al dieciséis por ciento cuando lo
+> normal en ella es uno punto siete y en cuentas parecidas, uno punto tres.
 
 - **[Acción] Muestra los botones de acción (Falso positivo / Investigar / Escalar).**
 
@@ -206,11 +226,11 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 > Si el caso amerita investigación, aquí tengo la actividad completa del día: cuántas máquinas tocó,
 > cuántas eran nuevas, fallos, protocolo y actividad fuera de horario.
 
-- **[Acción] Señala el mini-grafo.**
+- **[Acción] Señala el «Mapa de conexiones del día».**
 
-> Y este es el elemento diferenciador: el **grafo de conexiones**. En gris, las máquinas que la
-> cuenta ya conocía; **en rojo, las que tocó por primera vez ese día**. El movimiento lateral, que
-> evento por evento era invisible porque cada autenticación era válida, aquí salta a la vista.
+> Y este es el elemento diferenciador. En gris, las máquinas que la cuenta ya conocía; **en rojo,
+> las que tocó por primera vez ese día**. El movimiento lateral, que evento por evento era invisible
+> porque cada autenticación era válida, aquí salta a la vista.
 
 > **[Opcional, si quieres un grafo más espectacular]** El usuario **U-1653** (posición 23 de la
 > cola, día 20) muestra **33 destinos nuevos de 65** —la mitad de su actividad del día era territorio
@@ -234,8 +254,8 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 
 - **[Acción] Navega a `/executive`.**
 
-> Y para la dirección, el panel ejecutivo: tendencia de riesgo por rol de comportamiento, las
-> cuentas de mayor riesgo sostenido y la eficiencia del equipo.
+> Y para la dirección, el panel ejecutivo: tendencia de riesgo por perfil de cuenta, las cuentas de
+> mayor riesgo sostenido y la eficiencia del equipo.
 
 - **[Acción] Señala los KPIs del SOC.**
 
@@ -262,7 +282,7 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 | **¿El 94 % de falsos positivos no es demasiado?** | Es el costo real del umbral actual y lo reporto sin filtrar. La curva de alertas por día permite al SOC elegir su punto de operación según su capacidad. Es un sistema de priorización, no de bloqueo automático. |
 | **¿Qué harías con más tiempo?** | Enriquecer con las otras fuentes del mismo conjunto (procesos y flujos de red). Es la única palanca que añadiría señal nueva; probé tres alternativas de ajuste y ninguna generalizó. |
 | **¿El caso que mostraste era un ataque real?** | Sí: **U-0737 es una cuenta genuinamente comprometida** y está en el primer lugar de la cola. Tuvo siete días en alerta durante el periodo, y **cinco de ellos tienen actividad de red team confirmada** (días 20, 22, 26, 27 y 29). El día de mayor puntuación (23) cae dentro de esa ventana de compromiso aunque no tenga un evento etiquetado ese día concreto. |
-| **¿Por qué el grafo muestra solo 6 nodos rojos si en la diapositiva se ven decenas?** | Porque son casos distintos: la figura de la diapositiva es del periodo de entrenamiento, donde documenté un caso con 28 destinos nuevos de 49. En el periodo de prueba, este usuario abre 6 destinos nuevos. La señal es la misma —destinos que la cuenta jamás había tocado—, cambia la magnitud. |
+| **¿Por qué el mapa muestra solo 6 nodos rojos si en la diapositiva se ven decenas?** | Porque son casos distintos: la figura de la diapositiva es del periodo de entrenamiento, donde documenté un caso con 28 destinos nuevos de 49. En el periodo de prueba, este usuario abre 6 destinos nuevos. La señal es la misma —destinos que la cuenta jamás había tocado—, cambia la magnitud. |
 
 ---
 

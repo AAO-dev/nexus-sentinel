@@ -1,0 +1,191 @@
+/* Misma paleta y tipografía que la consola de Nexus Sentinel, para que la demostración
+   se lea como una sola pieza al pasar de esta página a la herramienta. */
+
+:root {
+  --surface: #fcfcfb;
+  --surface-2: #ffffff;
+  --plane: #f4f4f1;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --line: #e1e0d9;
+
+  --azul: #2a78d6;
+  --rojo: #e34948;
+  --rojo-fg: #b3261e;
+  --rojo-bg: #fdecea;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 4px 12px rgba(11, 11, 11, 0.04);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--plane); }
+
+.pagina {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+}
+
+/* ---------- cabecera ---------- */
+.cabecera { text-align: center; margin-bottom: 44px; }
+
+.etiqueta-caso {
+  display: inline-block;
+  background: var(--rojo-bg);
+  color: var(--rojo-fg);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 22px;
+}
+
+.cabecera h1 {
+  font-size: 40px;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  margin: 0 0 18px;
+}
+.cabecera h1 span { color: var(--azul); }
+
+.entrada {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+/* ---------- cifras ---------- */
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 52px;
+}
+
+.cifra {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 18px;
+  text-align: center;
+}
+
+.cifra-valor { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
+.cifra-valor.grave { color: var(--rojo-fg); }
+.cifra-etiqueta { font-size: 13px; font-weight: 600; margin-top: 6px; }
+.cifra-nota { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+/* ---------- bloques ---------- */
+.bloque { margin-bottom: 48px; }
+
+.bloque h2 {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bloque-entrada {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin: 14px 0 22px;
+  max-width: 720px;
+}
+
+/* ---------- anatomía del ataque ---------- */
+.anatomia { list-style: none; padding: 0; margin: 24px 0 0; }
+
+.paso {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 18px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.paso:last-child { border-bottom: 0; }
+
+.paso-n {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paso h3 { font-size: 17px; margin: 6px 0 8px; letter-spacing: -0.01em; }
+.paso p { font-size: 15px; line-height: 1.62; color: var(--ink-2); margin: 0; }
+
+.paso-clave {
+  margin-top: 10px !important;
+  padding-left: 14px;
+  border-left: 3px solid var(--rojo);
+  font-weight: 600;
+  color: var(--ink) !important;
+}
+
+/* ---------- las dos fallas ---------- */
+.fallas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.falla {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.falla h3 { font-size: 16px; margin: 0 0 10px; letter-spacing: -0.01em; color: var(--rojo-fg); }
+.falla p { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); margin: 0; }
+
+.falla-respuesta {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.falla-respuesta span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--azul);
+  margin-bottom: 6px;
+}
+.falla-respuesta p { color: var(--ink) !important; }
+
+/* ---------- puente a la herramienta ---------- */
+.puente {
+  text-align: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 34px 24px;
+}
+
+.puente img { height: 62px; width: auto; margin-bottom: 18px; }
+.puente p { font-size: 16px; line-height: 1.7; color: var(--ink-2); margin: 0; }
+.puente strong { color: var(--ink); font-size: 18px; }
+
+/* ---------- pantallas angostas ---------- */
+@media (max-width: 820px) {
+  .cifras { grid-template-columns: 1fr 1fr; }
+  .fallas { grid-template-columns: 1fr; }
+  .cabecera h1 { font-size: 30px; }
+}
