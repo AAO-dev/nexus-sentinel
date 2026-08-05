@@ -1,8 +1,10 @@
-/* Misma paleta y tipografía que la consola de Nexus Sentinel, para que la demostración
-   se lea como una sola pieza al pasar de esta página a la herramienta. */
+/* Apertura de la demostración.
+
+   Hereda la paleta de la consola de Nexus Sentinel, pero con un lenguaje de presentación:
+   pocas palabras, tipografía grande y alternancia de bloques oscuros y claros para dar ritmo.
+   Los bloques oscuros son los de golpe emocional; los claros, los informativos. */
 
 :root {
-  --surface: #fcfcfb;
   --surface-2: #ffffff;
   --plane: #f4f4f1;
   --ink: #0b0b0b;
@@ -11,12 +13,17 @@
   --line: #e1e0d9;
 
   --azul: #2a78d6;
+  --azul-hondo: #1b5bb0;
   --rojo: #e34948;
   --rojo-fg: #b3261e;
   --rojo-bg: #fdecea;
 
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 4px 12px rgba(11, 11, 11, 0.04);
+  --oscuro: #0b1522;
+  --oscuro-2: #16243a;
+  --tinta-clara: #aebbcc;
+
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 6px 18px rgba(11, 11, 11, 0.05);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--ink);
 }
@@ -24,168 +31,308 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--plane); }
 
-.pagina {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 56px 24px 72px;
-}
+.pagina { max-width: 1060px; margin: 0 auto; padding: 60px 28px 80px; }
 
-/* ---------- cabecera ---------- */
-.cabecera { text-align: center; margin-bottom: 44px; }
+/* ---------- bloques oscuros ---------- */
+.oscuro {
+  background: var(--oscuro);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 52px 44px;
+}
+.oscuro h2 { color: var(--tinta-clara); }
+
+/* ---------- apertura ---------- */
+.cabecera { text-align: center; margin-bottom: 48px; }
 
 .etiqueta-caso {
   display: inline-block;
   background: var(--rojo-bg);
   color: var(--rojo-fg);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 6px 14px;
+  padding: 8px 18px;
   border-radius: 999px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .cabecera h1 {
-  font-size: 40px;
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-  margin: 0 0 18px;
+  font-size: 66px;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 0;
 }
 .cabecera h1 span { color: var(--azul); }
 
-.entrada {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--ink-2);
-  max-width: 660px;
-  margin: 0 auto;
-}
-
-/* ---------- cifras ---------- */
+/* ---------- cifras: el dato es el diseño ---------- */
 .cifras {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 52px;
+  gap: 0;
+  margin-bottom: 60px;
+  border-top: 2px solid var(--ink);
 }
 
 .cifra {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px 18px;
+  padding: 26px 18px 22px;
   text-align: center;
+  border-right: 1px solid var(--line);
 }
+.cifra:last-child { border-right: 0; }
 
-.cifra-valor { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
+.cifra-valor {
+  font-size: 60px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
 .cifra-valor.grave { color: var(--rojo-fg); }
-.cifra-etiqueta { font-size: 13px; font-weight: 600; margin-top: 6px; }
-.cifra-nota { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.cifra-etiqueta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 12px;
+  letter-spacing: 0.02em;
+}
 
 /* ---------- bloques ---------- */
-.bloque { margin-bottom: 48px; }
+.bloque { margin-bottom: 52px; }
 
 .bloque h2 {
-  font-size: 22px;
-  letter-spacing: -0.02em;
-  margin: 0 0 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 28px;
 }
 
-.bloque-entrada {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--ink-2);
-  margin: 14px 0 22px;
-  max-width: 720px;
-}
-
-/* ---------- anatomía del ataque ---------- */
-.anatomia { list-style: none; padding: 0; margin: 24px 0 0; }
-
-.paso {
+/* ---------- qué pasó: progresión conectada ---------- */
+.pasos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 18px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  position: relative;
 }
-.paso:last-child { border-bottom: 0; }
+
+/* La línea que une los tres pasos: hace visible que es una secuencia, no una lista. */
+.pasos::before {
+  content: '';
+  position: absolute;
+  top: 21px;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: linear-gradient(to right, var(--azul), var(--rojo));
+}
+
+.paso { position: relative; padding-top: 0; }
 
 .paso-n {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--azul);
-  color: #fff;
-  font-weight: 700;
-  font-size: 15px;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.paso h3 { font-size: 17px; margin: 6px 0 8px; letter-spacing: -0.01em; }
-.paso p { font-size: 15px; line-height: 1.62; color: var(--ink-2); margin: 0; }
-
-.paso-clave {
-  margin-top: 10px !important;
-  padding-left: 14px;
-  border-left: 3px solid var(--rojo);
-  font-weight: 600;
-  color: var(--ink) !important;
-}
-
-/* ---------- las dos fallas ---------- */
-.fallas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-.falla {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 22px;
-}
-
-.falla h3 { font-size: 16px; margin: 0 0 10px; letter-spacing: -0.01em; color: var(--rojo-fg); }
-.falla p { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); margin: 0; }
-
-.falla-respuesta {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--line);
-}
-.falla-respuesta span {
-  display: block;
-  font-size: 11px;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: #fff;
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--azul);
-  margin-bottom: 6px;
+  box-shadow: 0 0 0 6px var(--plane);
 }
-.falla-respuesta p { color: var(--ink) !important; }
+.paso:last-child .paso-n { background: var(--rojo); }
 
-/* ---------- puente a la herramienta ---------- */
-.puente {
+.paso > span:last-child {
+  display: block;
   text-align: center;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- por qué nadie lo detuvo (oscuro) ---------- */
+.fallas { list-style: none; padding: 0; margin: 0; display: grid; gap: 26px; }
+
+.fallas li {
+  position: relative;
+  padding-left: 32px;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+.fallas li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--rojo);
+}
+
+/* ---------- a quién le sirve ---------- */
+.usuarios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+.usuario {
   background: var(--surface-2);
   border: 1px solid var(--line);
+  border-top: 5px solid var(--azul);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 34px 24px;
+  padding: 26px 24px;
+}
+.usuarios .usuario:nth-child(2) { border-top-color: var(--azul-hondo); }
+.usuarios .usuario:nth-child(3) { border-top-color: var(--muted); }
+
+.usuario h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+.usuario p {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
+  margin: 0;
 }
 
-.puente img { height: 62px; width: auto; margin-bottom: 18px; }
-.puente p { font-size: 16px; line-height: 1.7; color: var(--ink-2); margin: 0; }
-.puente strong { color: var(--ink); font-size: 18px; }
+/* ---------- cómo se vende ---------- */
+.modelo { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+
+.modelo li {
+  position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--azul);
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- el argumento de venta ---------- */
+.bloque.venta { margin-bottom: 20px; }
+
+.argumento {
+  margin-bottom: 52px;
+  background: var(--azul);
+  border-radius: var(--radius);
+  padding: 46px 48px;
+  color: #fff;
+}
+
+.cob { margin-bottom: 30px; }
+.cob-cabeza { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.cob-casos { font-size: 21px; font-weight: 600; opacity: 0.9; }
+.cob-valor { font-size: 54px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
+
+.cob-barra {
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+.cob-relleno { height: 100%; border-radius: 999px; background: #fff; }
+
+.argumento p {
+  margin: 0;
+  padding-top: 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+/* ---------- cierre ---------- */
+.puente { text-align: center; padding: 60px 40px; }
+.puente img { height: 78px; width: auto; margin-bottom: 28px; filter: brightness(0) invert(1); }
+.puente p { font-size: 30px; font-weight: 600; letter-spacing: -0.025em; margin: 0; }
+
+/* ---------- portada: solo existe en el PDF ---------- */
+.portada { display: none; }
 
 /* ---------- pantallas angostas ---------- */
+@media (max-width: 940px) {
+  .pasos, .usuarios { grid-template-columns: 1fr; }
+  .pasos::before { display: none; }
+  .cabecera h1 { font-size: 44px; }
+  .fallas li { font-size: 24px; }
+}
+
 @media (max-width: 820px) {
-  .cifras { grid-template-columns: 1fr 1fr; }
-  .fallas { grid-template-columns: 1fr; }
-  .cabecera h1 { font-size: 30px; }
+  .cifras { grid-template-columns: 1fr 1fr; border-top: 0; }
+  .cifra { border: 1px solid var(--line); }
+  .cabecera h1 { font-size: 34px; }
+  .cifra-valor { font-size: 44px; }
+}
+
+/* ---------- impresión: cada bloque es una diapositiva 16:9 ---------- */
+@media print {
+  @page { size: 254mm 143mm; margin: 0; }
+
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  body { background: #fff; }
+  .pagina { max-width: none; padding: 0; }
+
+  /* Una hoja por bloque. Los fondos oscuros llegan al borde de la página. */
+  .portada,
+  .hoja-apertura,
+  .bloque,
+  .argumento,
+  .puente {
+    height: 143mm;
+    width: 254mm;
+    margin: 0;
+    padding: 0 22mm;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .puente { break-after: auto; page-break-after: auto; }
+
+  .portada {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    background: var(--oscuro);
+    color: #fff;
+  }
+  .portada img { height: 32mm; width: auto; margin-bottom: 12mm; filter: brightness(0) invert(1); }
+  .portada h1 { font-size: 46pt; letter-spacing: -0.035em; margin: 0 0 7mm; }
+  .portada-sub {
+    font-size: 15pt;
+    color: var(--tinta-clara);
+    max-width: 165mm;
+    line-height: 1.45;
+    margin: 0 0 18mm;
+  }
+  .portada-autor { font-size: 10.5pt; color: var(--tinta-clara); opacity: 0.7; line-height: 1.7; margin: 0; }
+
+  .cabecera { margin-bottom: 14mm; }
+  .cifras { margin-bottom: 0; }
+  .paso-n { box-shadow: 0 0 0 6px #fff; }
+
+  .cifra, .usuario, .modelo li { box-shadow: none; }
 }

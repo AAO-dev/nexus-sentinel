@@ -167,10 +167,15 @@ no diapositivas. Aproximadamente 700 palabras habladas.
 
 # PARTE 2 — Demo en vivo (5 minutos)
 
-La rúbrica pide: describir **brevemente** el reto y dedicar el resto a la **interfaz**. Regla de
-oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
+Estructura pedida: **1 minuto** para el problema, la estrategia, el usuario final y cómo se vende;
+**4 minutos** para la herramienta.
 
-### 0:00 – 0:45 · El reto, en 45 segundos
+> **Lenguaje del primer minuto:** de negocio, no de datos. Nada de modelo, variables, desviaciones,
+> SHAP ni algoritmos. Habla de cuentas que se comportan distinto, de listas de casos y de cuántos
+> analistas hacen falta. La página de apertura ya está escrita así: **apóyate en ella y no la
+> traduzcas**.
+
+### 0:00 – 0:25 · El problema y su costo
 
 - **[Acción] Abre la pestaña de la apertura (localhost:5174).** Empieza arriba: el titular y las
   cuatro cifras caben en pantalla sin bajar.
@@ -179,24 +184,46 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 > real. En 2013 Target sufrió una de las brechas más costosas de la historia: cuarenta millones de
 > tarjetas, setenta millones de clientes y más de doscientos millones de dólares en pérdidas.
 
-- **[Acción] Baja a «Cómo ocurrió» y detente en el paso 2.**
+- **[Acción] Baja a «Qué pasó» y detente en el paso 2.**
 
-> No hubo ningún exploit. Robaron la credencial de un proveedor de aire acondicionado y con esa
-> cuenta legítima se movieron por la red hasta las cajas registradoras, tres semanas sin que nadie
-> lo notara. El detalle clave está aquí: **cada autenticación, por separado, era válida**.
+> No hubo ningún truco sofisticado: robaron el usuario y la contraseña de un proveedor de aire
+> acondicionado. Con esa cuenta, que tenía permiso para entrar, se pasearon por la red hasta llegar
+> a las cajas de las tiendas. **Nadie los detuvo, porque nadie estaba haciendo nada prohibido.**
 
 - **[Acción] Baja a «Por qué nadie lo detuvo a tiempo».**
 
-> Hubo dos fallas: las alertas existían pero se ahogaron sin priorizar, y la anomalía no estaba en
-> ningún evento sino en el patrón. Nexus Sentinel ataca esas dos, y lo hago con datos reales de Los
-> Álamos: mil millones de eventos, con un desbalance de un caso malicioso por cada doscientos
-> sesenta y cinco.
+> Y fallaron dos cosas. Las alertas existían, pero se perdieron entre miles sin ordenar. Y nada
+> parecía sospechoso por separado: lo raro solo se veía al mirar el conjunto. Este problema sigue
+> abierto hoy en la mayoría de las empresas, **y ese es exactamente el mercado**.
+
+### 0:25 – 0:40 · A quién le sirve
+
+- **[Acción] Baja a «A quién le sirve».**
+
+> Nexus Sentinel vigila cómo se comportan las cuentas y avisa cuando alguna empieza a actuar
+> distinto a como siempre lo ha hecho. Lo usan tres personas: **el analista de seguridad**, que en
+> vez de cientos de avisos recibe una lista corta y ya justificada; **el director de seguridad**,
+> que ve el riesgo de toda la organización y puede defender su presupuesto; y **auditoría**, que
+> obtiene el registro de quién decidió qué y con qué evidencia.
+
+### 0:40 – 1:00 · Cómo se vende
+
+- **[Acción] Baja a «Cómo se vende» y detente en el recuadro azul.**
+
+> Y no sustituye lo que la empresa ya paga en seguridad: se conecta a esas herramientas y les pone
+> orden. Se cobra por suscripción anual según cuántas cuentas se vigilan, y entra al cliente con una
+> prueba de treinta días sobre su propia información.
+
+> Pero el argumento que cierra la venta es este: **el cliente elige cuánto quiere cubrir según el
+> equipo que tiene**. Con capacidad para revisar veinte casos al día detecta el treinta y uno por
+> ciento de las cuentas comprometidas; con cien al día, el ochenta y cinco. Por primera vez,
+> «¿cuánta seguridad me da contratar un analista más?» tiene una respuesta con números.
 
 - **[Acción] Cambia a la pestaña de la consola (`/triage`).**
 
 > Esto es lo que un analista habría visto ese día.
 
-### 0:45 – 2:00 · Vista 1: Triaje (el flujo del analista)
+### 1:00 – 2:00 · Vista 1: Triaje (el flujo del analista)
 
 - **[Acción] Muestra `/triage`.**
 
@@ -236,15 +263,15 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 > cola, día 20) muestra **33 destinos nuevos de 65** —la mitad de su actividad del día era territorio
 > desconocido—. Puedes abrirlo con la URL `…/employee/U-1653?date=20`. Advertencia de honestidad:
 > **esa cuenta no está etiquetada como comprometida**, así que si la usas, preséntala como ejemplo
-> visual del patrón, no como un acierto del modelo.
+> visual del comportamiento, no como un acierto del sistema.
 
 ### 3:15 – 4:00 · El asistente conversacional
 
 - **[Acción] Abre el asistente y pregunta: `¿Quiénes son los usuarios de mayor riesgo?`**
 
-> Para que la herramienta sea usable por cualquier perfil, integré un asistente conversacional.
-> No es un chatbot genérico: cuando necesita un dato, **consulta el modelo real** mediante
-> herramientas, así que responde con las cifras verdaderas del periodo.
+> Para que cualquiera pueda usar la herramienta, sin importar su perfil, integré un asistente
+> conversacional. No es un chatbot genérico: cuando necesita un dato **lo consulta en el sistema**,
+> así que responde con las cifras reales del periodo y no se las inventa.
 
 - **[Acción] Segunda pregunta: `¿Qué significa la puntuación de riesgo?`**
 
@@ -290,8 +317,12 @@ oro: máximo 1 minuto de contexto, 4 minutos de herramienta.
 
 - **Habla de "yo"**, no de "nosotros": el proyecto es individual.
 - **No leas el guion**: úsalo para fijar el hilo y los números clave.
-- Los números que debes tener memorizados: **40M tarjetas / $200M USD** (Target), **1,051M eventos**,
-  **1 de cada 265** (desbalance), **U-0737 = posición #1 y compromiso real**, **riesgo 98**,
-  **16 % vs 1.7 % vs 1.3 %** (NTLM: hoy / su base / sus pares), **20 alertas/día → 31 % de cuentas**.
+- Los números que debes tener memorizados: **40M tarjetas / 70M clientes / $200M USD** (Target),
+  **20 casos al día → 31 % de cobertura** y **100 al día → 85 %** (el argumento de venta),
+  **U-0737 = posición #1 y compromiso real**, **riesgo 98**, **16 % vs 1.7 % vs 1.3 %** (NTLM: este
+  día / lo habitual en la cuenta / cuentas similares).
+- **El primer minuto no lleva ni un solo número técnico.** Los mil millones de eventos y el
+  desbalance de 1 de cada 265 son para el video y para las preguntas, no para la apertura de la
+  demo en vivo.
 - Si algo falla en vivo, **el asistente y las tres vistas son independientes**: si una tarda, pasa a
   otra y regresa. Y recuerda el punto 1 de la lista de arriba: despierta el backend antes.
