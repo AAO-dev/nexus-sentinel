@@ -8,15 +8,17 @@ comportamiento de autenticación de cada usuario, sobre datos reales de una red 
 
 | Entregable | Enlace |
 |---|---|
-| 🖥️ **Interfaz en vivo** | https://nexus-sentinel-iota.vercel.app |
+| 🖥️ **Interfaz desplegada** | https://nexus-sentinel-iota.vercel.app |
+| 🎬 **Video de presentación** | https://youtu.be/83_SxOdOjOc |
 | ⚙️ **API (documentación interactiva)** | https://nexus-sentinel-api-2m8a.onrender.com/docs |
 | 📓 **Notebook reproducible** | [`notebook/ueba_lanl_nexus_sentinel.ipynb`](notebook/ueba_lanl_nexus_sentinel.ipynb) |
 | 📄 **Documento final** | [`docs/entregables/Documento - Nexus Sentinel.pdf`](docs/entregables/) |
-| 🎤 **Presentación y guion** | [`docs/entregables/Presentacion - Nexus Sentinel.pdf`](docs/entregables/) |
+| 🎤 **Presentación** | [`docs/entregables/Presentacion - Nexus Sentinel.pdf`](docs/entregables/) |
+| 🔁 **Guía de reproducción** | [`REPRODUCIR.md`](REPRODUCIR.md) |
 
 > **Nota sobre la primera carga:** el backend está desplegado en un plan gratuito que suspende el
-> servicio tras 15 minutos de inactividad. La primera petición puede tardar hasta 50 segundos en
-> despertarlo; la interfaz reintenta automáticamente durante ese tiempo.
+> servicio tras 15 minutos de inactividad. La primera petición puede tardar hasta un minuto en
+> despertarlo; la interfaz lo avisa en pantalla y carga los datos sola en cuanto responde.
 
 ---
 
@@ -198,8 +200,11 @@ para esta documentación y el documento final, donde sí corresponden.
 ```
 nexus-sentinel/
 ├── README.md                      Este documento
-├── DEPLOY.md                      Despliegue paso a paso (Render + Vercel)
-├── requirements.txt               Dependencias de Python del pipeline
+├── REPRODUCIR.md                  Guía paso a paso para levantar todo desde cero
+├── DEPLOY.md                      Despliegue en Render y Vercel
+├── requirements.txt               Dependencias de Python, con versiones fijadas
+│
+├── .github/workflows/             Consulta periódica que evita que el backend se suspenda
 │
 ├── notebook/
 │   └── ueba_lanl_nexus_sentinel.ipynb   Narrativa completa de punta a punta; importa src/
@@ -243,7 +248,7 @@ nexus-sentinel/
     ├── eda/                       Figuras 1-3 del análisis exploratorio
     ├── modeling/                  Figuras 4-5 (evaluación y SHAP)
     ├── demo/snapshot.json         Datos que sirve la API (1.6 MB)
-    └── entregables/               Documento final, presentación, guion y fuente LaTeX
+    └── entregables/               Documento final y presentación, en PDF
 ```
 
 > **Lo único que no está en el repositorio** es `data/work/auth_sample.parquet` (200 MB, los eventos
@@ -254,20 +259,22 @@ nexus-sentinel/
 
 ## Cómo reproducir el proyecto
 
+📖 **Guía completa paso a paso: [`REPRODUCIR.md`](REPRODUCIR.md)** — instalación, notebook, pipeline,
+backend, interfaz, verificación y solución de problemas.
+
 **Requisitos:** Python 3.11 y Node.js 18 o superior.
 
-### Qué necesitas descargar según lo que quieras reproducir
+El repositorio **versiona los artefactos intermedios**, así que no hace falta descargar nada pesado
+salvo que quieras rehacer el muestreo desde la fuente original:
 
-El repositorio versiona los artefactos intermedios precisamente para que **no haga falta descargar
-nada pesado** salvo que quieras rehacer el muestreo desde la fuente original:
-
-| Quiero reproducir… | Necesito descargar | Tiempo aproximado |
+| Quiero reproducir… | Necesito descargar | Tiempo |
 |---|---|---|
-| **Modelado, inferencia, API e interfaz** | Nada, todo está en el repositorio | Minutos |
-| **Análisis exploratorio e ingeniería de variables** | `auth_sample.parquet` (200 MB), que el notebook baja solo | ~1 minuto de descarga |
-| **El muestreo desde cero** | `auth.txt.gz` (7.2 GB) desde csr.lanl.gov, vía `src/data.py` | 1–2 horas |
+| **API e interfaz funcionando** | Nada, todo está en el repositorio | 5 minutos |
+| **Modelado e inferencia** (reentrenar) | Nada, la tabla de variables está versionada | 10 minutos |
+| **Análisis exploratorio e ingeniería de variables** | `auth_sample.parquet` (200 MB), que el notebook descarga solo | 15 minutos |
+| **El muestreo desde el origen** | `auth.txt.gz` (7.2 GB) desde csr.lanl.gov | 1–2 horas |
 
-### 1 · Clonar e instalar
+### El camino más corto: ver el sistema funcionando
 
 ```bash
 git clone https://github.com/AAO-dev/nexus-sentinel.git
@@ -275,53 +282,13 @@ cd nexus-sentinel
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-En Linux o macOS, la tercera línea es `source .venv/bin/activate`.
-
-### 2 · Ejecutar el notebook
-
-Es el recorrido completo y narrado: datos, exploración, variables, modelado, inferencia y API.
-
-```bash
-jupyter notebook notebook/ueba_lanl_nexus_sentinel.ipynb
-```
-
-Ofrece dos rutas y la elección está explicada dentro. La **ruta rápida** (por defecto) descarga sola
-`auth_sample.parquet` desde la [*release* v1.0](https://github.com/AAO-dev/nexus-sentinel/releases),
-por lo que **corre tal cual en un Google Colab limpio** sin credenciales ni configuración previa. La
-**ruta larga** regenera el muestreo desde el archivo original de LANL.
-
-### 3 · Ejecutar el pipeline por módulos
-
-Alternativa al notebook, útil para regenerar un artefacto concreto. Cada módulo escribe sus salidas
-y puede correrse por separado siempre que existan las entradas del anterior:
-
-```bash
-python -m src.data        # muestreo             → data/work/auth_sample.parquet
-python -m src.eda         # figuras 1-3          → docs/eda/
-python -m src.features    # tabla maestra        → data/work/user_day_features.parquet, models/peer_kmeans.joblib
-python -m src.models      # entrenamiento        → models/fase4_artefactos.joblib, docs/modeling/
-python -m src.inference   # snapshot y umbrales  → docs/demo/snapshot.json, models/inference_bundle.joblib
-```
-
-### 4 · Levantar el backend
-
-```bash
 uvicorn api.main:app --port 8000
 ```
 
-La documentación interactiva queda en http://localhost:8000/docs. Sirve el snapshot ya versionado,
-así que **funciona sin haber entrenado nada**. Para verificar el contrato:
+En Linux o macOS, la cuarta línea es `source .venv/bin/activate`.
 
-```bash
-pytest api/tests -q
-```
-
-El asistente conversacional requiere la variable de entorno `DEEPSEEK_API_KEY`; sin ella la API
-responde `503` en esa ruta y el resto del sistema sigue funcionando con normalidad.
-
-### 5 · Levantar la interfaz
+El backend **funciona sin haber entrenado nada**, porque sirve el snapshot ya versionado. Con él
+corriendo, en otra terminal:
 
 ```bash
 cd ui
@@ -329,21 +296,8 @@ npm install
 npm run dev
 ```
 
-Queda en http://localhost:5173. En desarrollo las peticiones a `/api` se redirigen solas al backend
-local, de modo que no hay que configurar variables de entorno.
-
-### 6 · Apertura de la demostración (opcional)
-
-Página local que presenta el caso Target antes de mostrar la consola. No se despliega ni depende de
-la API:
-
-```bash
-cd intro-demo
-npm install
-npm run dev
-```
-
-Queda en http://localhost:5174, en un puerto distinto para poder tenerla abierta junto a la consola.
+La consola queda en http://localhost:5173 y no requiere configurar variables de entorno: en
+desarrollo, las peticiones a `/api` se redirigen solas al backend local.
 
 ### Verificar que todo quedó bien
 
@@ -361,6 +315,11 @@ Instrucciones completas paso a paso en [`DEPLOY.md`](DEPLOY.md).
 |---|---|---|
 | Backend | Render (Docker) | `DEEPSEEK_API_KEY`, `CORS_ORIGINS` |
 | Frontend | Vercel | `VITE_API_URL` |
+
+El plan gratuito de Render suspende el servicio tras 15 minutos sin tráfico, y reactivarlo tarda
+cerca de un minuto. Para que quien abra el enlace no se encuentre con una espera, una tarea
+programada en `.github/workflows/` consulta el estado del servicio cada 10 minutos y evita que
+llegue a dormirse.
 
 ## Limitaciones y trabajo futuro
 

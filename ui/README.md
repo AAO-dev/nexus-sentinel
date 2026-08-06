@@ -3,7 +3,8 @@
 Consola del analista SOC en **React 18 + Vite + TypeScript**. Consume la API del proyecto y presenta
 la cola de triage priorizada y explicada.
 
-> Despliegue paso a paso: [DEPLOY.md](../DEPLOY.md) en la raíz del proyecto.
+> Reproducir el proyecto completo: [REPRODUCIR.md](../REPRODUCIR.md) · Despliegue paso a paso:
+> [DEPLOY.md](../DEPLOY.md), ambos en la raíz del proyecto.
 
 ## Arranque rápido
 
@@ -40,8 +41,8 @@ En desarrollo no hace falta configurar nada: Vite redirige `/api` al backend loc
 | Gráficas | Recharts | Timeline de riesgo y tendencias; el grafo ego es SVG propio |
 
 **Regla que gobierna todo el frontend:** la UI **nunca recalcula riesgo, umbrales ni explicaciones**.
-Si un número no viene de la API, no existe. Todo el conocimiento de ML vive en el backend
-es la separación de responsabilidades que gobierna el sistema.
+Si un número no viene de la API, no existe. Todo el conocimiento del modelo vive en el backend: esa
+separación de responsabilidades es la que gobierna el sistema.
 
 ## Estructura
 
@@ -52,10 +53,11 @@ src/
 │   └── schema.d.ts    # GENERADO — no editar a mano
 ├── components/ui.tsx  # presentacionales compartidos (KpiCard, RiskBadge, estados de carga/error)
 ├── features/
-│   ├── shared/        # ShapExplainer, RiskTimeline, ActionBar
+│   ├── shared/        # ShapExplainer, RiskTimeline, ActionBar, perfiles.ts
 │   ├── triage/        # Vista 1
 │   ├── investigation/ # Vista 2 (incluye EgoGraphMini)
-│   └── executive/     # Vista 3
+│   ├── executive/     # Vista 3
+│   └── assistant/     # Widget conversacional flotante
 ├── hooks/useApi.ts    # todas las llamadas al backend pasan por aquí
 ├── App.tsx            # layout y rutas
 └── styles.css         # paleta del proyecto
@@ -65,22 +67,32 @@ src/
 
 | Ruta | Vista | Qué resuelve |
 |---|---|---|
-| `/triage` | Consola de triage | Cola priorizada con motivo en una línea, evolución del riesgo, explicación SHAP y acciones del analista |
-| `/employee/:id` | Investigación | Actividad del día, comparativa vs. línea base personal y peer group, **mini-grafo ego** e historial de decisiones |
-| `/executive` | Panel ejecutivo | Tendencia por rol conductual, cuentas de mayor riesgo y eficiencia del SOC |
+| `/triage` | Consola de triage | Cola priorizada con el motivo en una línea, evolución del riesgo, panel «Qué disparó la alerta» y acciones del analista |
+| `/employee/:id` | Investigación | Actividad del día, qué se salió de lo normal, **mapa de conexiones** e historial de decisiones |
+| `/executive` | Panel ejecutivo | Tendencia por perfil de cuenta, cuentas de mayor riesgo y eficiencia del SOC |
+
+> **Lenguaje de la interfaz:** el usuario final es el analista de un SOC, no un científico de datos.
+> Las vistas hablan de conducta observable y evidencia; los términos del método —SHAP, K-Means,
+> modelo supervisado— se quedan en el código y en la documentación, donde sí corresponden. El
+> módulo `features/shared/perfiles.ts` es el ejemplo: traduce los grupos del modelo a nombres
+> legibles como «cuentas de uso intensivo y continuo».
 
 Además, un **asistente conversacional** flotante (botón 💬, presente en todas las vistas) responde
 preguntas del usuario y sirve de guía. Habla con `POST /assistant/chat`; la API key de DeepSeek vive
 solo en el backend. Si no está configurada, el widget se muestra deshabilitado con un aviso claro.
 
 ### Principios de diseño aplicados
-1. **Ninguna puntuación sin explicación** — el riesgo siempre aparece junto a su nivel y su SHAP.
+1. **Ninguna puntuación sin evidencia** — el riesgo siempre aparece junto a su nivel y a lo que lo
+   disparó.
 2. **Semáforo 1:1 con los accionables** — verde (pasivo) / naranja (ticket) / rojo (prioritario).
 3. **"Falso positivo" cierra el ciclo** — el feedback invalida la caché de la cola.
 4. **IDs anonimizados** (`U-####`) — la fuente ya viene desidentificada.
 5. **Human-in-the-loop** — la UI registra decisiones de personas; nunca ejecuta bloqueos de cuentas.
 
-## Plan B para la demo
+## Tolerancia al arranque en frío
 
-Streamlit sigue contemplado como MVP alternativo (`ui/streamlit_mvp/`, no implementado): si la demo
-en vivo falla por red, un script local que lea el mismo `snapshot.json` cubre el expediente.
+El backend desplegado vive en un plan gratuito que lo suspende tras un rato sin uso. La interfaz
+está preparada para eso: las peticiones tienen un límite de tiempo explícito —sin él, una conexión
+que queda abierta sin responder bloquearía la vista indefinidamente—, se insiste cada pocos segundos
+hasta obtener respuesta, y mientras tanto se muestra un aviso que explica la espera en lugar de un
+error. Los datos entran solos, sin que nadie tenga que recargar.

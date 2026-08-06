@@ -4,7 +4,7 @@ Backend FastAPI que expone la cola de triage priorizada y explicada. Es el **due
 conocimiento de ML** (puntuaciones, niveles, umbrales, SHAP); el frontend React consume y presenta,
 nunca recalcula: es la separación de responsabilidades que gobierna todo el sistema.
 
-## Contrato (7 endpoints + inferencia en vivo)
+## Contrato (11 rutas)
 
 | Método | Ruta | Respuesta |
 |---|---|---|
@@ -70,7 +70,10 @@ pip install -r api/requirements.txt
 uvicorn api.main:app --reload          # http://127.0.0.1:8000/docs
 ```
 
-Requiere `docs/demo/snapshot.json`, que se genera con `python -m src.inference`.
+Lee `docs/demo/snapshot.json`, que **ya viene versionado en el repositorio**: la API arranca sin
+necesidad de entrenar nada. Para regenerarlo desde los modelos: `python -m src.inference`.
+
+Guía de reproducción completa del proyecto: [REPRODUCIR.md](../REPRODUCIR.md).
 
 ## Pruebas de contrato
 

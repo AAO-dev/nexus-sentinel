@@ -1,31 +1,45 @@
-# Nexus Sentinel — dependencias (sección 9 del plan)
-# Adquisición y datos masivos
-requests
-pandas
-polars
-pyarrow
+# Nexus Sentinel — dependencias del pipeline de datos, modelado y API.
+#
+# Probado con Python 3.11. Las versiones están fijadas a las que se usaron para producir los
+# resultados del proyecto: instalar exactamente estas garantiza que el notebook y los modelos
+# se reproduzcan tal cual.
+#
+# Instalación:  pip install -r requirements.txt
+# El backend desplegado usa un subconjunto más ligero: ver api/requirements.txt
 
-# Grafo
-networkx
+# --- Adquisición y manejo de datos masivos ---
+requests==2.34.2
+pandas==3.0.3
+polars==1.42.1
+pyarrow==25.0.0
+numpy==2.4.6
 
-# EDA / visualización
-matplotlib
-seaborn
+# --- Grafo de conexiones usuario → computadora ---
+networkx==3.6.1
 
-# Modelado y explicabilidad
-scikit-learn
-xgboost
-shap
-joblib
+# --- Análisis exploratorio y figuras ---
+matplotlib==3.11.0
+seaborn==0.13.2
 
-# Backend API (ver api/requirements.txt para el set mínimo del despliegue)
-fastapi
-uvicorn[standard]
-pydantic
+# --- Modelado y explicabilidad ---
+scikit-learn==1.9.0
+xgboost==3.2.0
+shap==0.51.0
+joblib==1.5.3
 
-# Asistente conversacional (DeepSeek vía SDK de OpenAI; requiere DEEPSEEK_API_KEY)
-openai
+# --- API REST ---
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+pydantic==2.13.4
 
-# Pruebas de contrato de la API
-pytest
-httpx
+# --- Asistente conversacional (DeepSeek vía SDK de OpenAI; requiere DEEPSEEK_API_KEY) ---
+openai==2.46.0
+
+# --- Ejecución del notebook ---
+# Basta para abrirlo desde VS Code o Google Colab. Para el Jupyter clásico en el navegador,
+# instalar además:  pip install notebook
+ipykernel==7.3.0
+
+# --- Pruebas de contrato de la API ---
+pytest==9.1.1
+httpx==0.28.1

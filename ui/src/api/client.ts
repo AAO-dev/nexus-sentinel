@@ -38,11 +38,29 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  });
+/**
+ * Sin límite de tiempo, una conexión que queda abierta sin responder bloquea la consulta para
+ * siempre: no falla, así que no se reintenta, y la interfaz se queda esperando indefinidamente.
+ * Es justo lo que ocurre cuando el backend está suspendido. Con un corte explícito la petición
+ * falla, el reintento se dispara y la aplicación se recupera sola.
+ */
+const ESPERA_MAX_MS = 20_000;
+
+async function request<T>(path: string, init?: RequestInit & { esperaMs?: number }): Promise<T> {
+  const { esperaMs = ESPERA_MAX_MS, ...resto } = init ?? {};
+  const corte = new AbortController();
+  const temporizador = setTimeout(() => corte.abort(), esperaMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...resto,
+      signal: corte.signal,
+      headers: { 'Content-Type': 'application/json', ...resto.headers },
+    });
+  } finally {
+    clearTimeout(temporizador);
+  }
   if (!res.ok) {
     let detail = `Error ${res.status}`;
     try {
@@ -76,7 +94,13 @@ export const api = {
 
   assistantHealth: () => request<{ disponible: boolean; modelo: string }>('/assistant/health'),
   assistantChat: (messages: MensajeChat[]) =>
-    request<ChatOut>('/assistant/chat', { method: 'POST', body: JSON.stringify({ messages }) }),
+    // El modelo puede encadenar varias llamadas a herramientas antes de responder: necesita
+    // bastante más margen que una lectura del snapshot.
+    request<ChatOut>('/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({ messages }),
+      esperaMs: 90_000,
+    }),
 
   feedbackHistory: (caseId: string) =>
     request<FeedbackRegistro[]>(`/cases/${encodeURIComponent(caseId)}/feedback`),

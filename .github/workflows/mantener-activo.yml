@@ -1,0 +1,41 @@
+# Mantiene despierto el backend desplegado en el plan gratuito de Render.
+#
+# El servicio se suspende tras ~15 minutos sin tráfico y su siguiente arranque tarda cerca de un
+# minuto, tiempo durante el cual la interfaz aparece vacía para quien abre el enlace sin saber que
+# debe esperar. Una consulta cada 10 minutos deja margen suficiente para que nunca llegue a
+# dormirse.
+name: Mantener el backend activo
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+# Si una ejecución se retrasa, no tiene sentido acumular varias en cola.
+concurrency:
+  group: mantener-activo
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Consultar el estado del servicio
+        run: |
+          URL="https://nexus-sentinel-api-2m8a.onrender.com/health"
+
+          # --max-time cubre el arranque en frío: si el servicio estaba suspendido, esta misma
+          # llamada es la que lo despierta y puede tardar bastante en responder.
+          codigo=$(curl -sS -o respuesta.json -w '%{http_code}' --max-time 120 "$URL") || true
+
+          echo "HTTP $codigo"
+          cat respuesta.json 2>/dev/null || true
+          echo ""
+
+          if [ "$codigo" != "200" ]; then
+            echo "::warning::El servicio no respondió 200 (recibido: ${codigo:-sin respuesta})."
+            exit 1
+          fi
+
+          echo "Servicio activo."

@@ -1,15 +1,20 @@
-# Dependencias MÍNIMAS del backend desplegado (sirve el snapshot precomputado).
-# Con solo esto, los 6 endpoints de lectura + feedback funcionan y /inference/score
-# degrada con un 503 explícito (comportamiento diseñado y cubierto por tests).
-fastapi
-uvicorn[standard]
-pydantic
+# Dependencias MÍNIMAS del backend desplegado, que sirve el snapshot precomputado.
+#
+# Con solo esto funcionan las rutas de lectura, el registro de feedback y el asistente;
+# /inference/score degrada con un 503 explícito, que es el comportamiento diseñado y está
+# cubierto por las pruebas de contrato.
+#
+# Versiones fijadas para que la imagen de Docker se construya siempre igual.
 
-# Asistente conversacional (requerimiento del profesor): DeepSeek vía SDK de OpenAI.
-# Ligero; se incluye en el despliegue base. El asistente solo funciona si además se define
+fastapi==0.139.2
+uvicorn[standard]==0.51.0
+pydantic==2.13.4
+
+# Asistente conversacional: DeepSeek a través del SDK de OpenAI. Es una dependencia ligera,
+# así que se incluye en la imagen base. El asistente solo responde si además está definida
 # la variable de entorno DEEPSEEK_API_KEY (ver DEPLOY.md).
-openai
+openai==2.46.0
 
-# Para habilitar /inference/score (inferencia en vivo) hay que añadir además el stack de
-# modelado del proyecto: pandas, pyarrow, scikit-learn, xgboost, shap, joblib
-# (ver requirements.txt en la raíz). Encarece la imagen: solo si el despliegue lo permite.
+# Para habilitar /inference/score (inferencia en vivo) haría falta añadir el stack de modelado
+# completo —pandas, pyarrow, scikit-learn, xgboost, shap, joblib, ver requirements.txt de la
+# raíz— y montar models/. Encarece mucho la imagen: solo si el plan de despliegue lo permite.

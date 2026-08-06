@@ -85,9 +85,10 @@ La primera debe responder `{"status":"ok","snapshot_cargado":true,...}` y la seg
 `{"disponible": true, "modelo": "deepseek-chat"}`. La documentación interactiva queda en `/docs`.
 
 > ⚠️ **Sobre el nivel gratuito de Render:** el servicio se suspende tras 15 minutos de inactividad y
-> la primera petición tarda hasta 50 segundos en reactivarlo. El frontend está preparado para esperar
-> ese tiempo reintentando, pero **antes de una demostración en vivo conviene abrir la URL unos
-> minutos antes** para que el servicio esté activo.
+> reactivarlo tarda cerca de un minuto. El frontend lo avisa en pantalla y carga los datos solo en
+> cuanto el servicio responde, pero **antes de una demostración en vivo conviene abrir la URL unos
+> minutos antes** para que ya esté activo. El repositorio incluye además una tarea programada que
+> lo mantiene despierto: ver [Mantener el backend activo](#mantener-el-backend-activo).
 
 ---
 
@@ -127,14 +128,39 @@ comportamiento que necesita una aplicación de página única.
    Si lo dejas en `*`, cualquier sitio puede consumir tu API.
 
 2. **Verifica de punta a punta** abriendo la URL del frontend:
-   - La barra superior debe mostrar el periodo y el número de usuarios. Si dice *«backend no
-     disponible»*, revisa `VITE_API_URL` y `CORS_ORIGINS`.
-   - `/triage`: la cola carga y al seleccionar un usuario aparece su explicación.
-   - `/employee/U-0737`: se dibuja el mini-grafo con los destinos nuevos marcados.
+   - La barra superior debe mostrar el periodo y el número de usuarios. Si aparece el aviso
+     *«Despertando el servicio…»*, espera: el backend estaba suspendido y los datos entrarán solos.
+     Si el aviso no desaparece en un par de minutos, revisa `VITE_API_URL` y `CORS_ORIGINS`.
+   - `/triage`: la cola carga y al seleccionar un usuario aparece la evidencia del caso.
+   - `/employee/U-0737`: se dibuja el mapa de conexiones con los destinos nuevos marcados.
    - `/executive`: cargan las gráficas de tendencia.
    - El botón 💬 abre el asistente y responde a una pregunta.
 
 3. **Anota ambas URLs**: son parte de los entregables del proyecto.
+
+---
+
+## Mantener el backend activo
+
+El plan gratuito de Render suspende el servicio tras 15 minutos sin tráfico. Quien abra el enlace sin
+saberlo se encuentra con la interfaz esperando cerca de un minuto, así que el repositorio incluye una
+tarea programada que lo evita.
+
+El archivo es [`.github/workflows/mantener-activo.yml`](.github/workflows/mantener-activo.yml) y
+consulta `/health` cada 10 minutos, con margen suficiente sobre el umbral de los 15.
+
+Para que funcione:
+
+1. En GitHub, pestaña **Actions** del repositorio. Si es la primera vez, pulsa el botón que habilita
+   los flujos de trabajo.
+2. Comprueba que **Mantener el backend activo** aparezca en la lista lateral.
+3. Puedes lanzarlo a mano con **Run workflow** para verificar que responde correctamente.
+
+> ⚠️ **Si el repositorio es privado**, cada ejecución consume minutos de la cuota mensual de Actions.
+> Para unos días es irrelevante; si el proyecto queda archivado mucho tiempo, conviene desactivar el
+> flujo desde la misma pestaña **Actions**.
+>
+> Si cambias la URL del backend, actualiza la variable `URL` dentro del archivo del flujo.
 
 ---
 
@@ -170,10 +196,10 @@ DEEPSEEK_API_KEY=sk-... uvicorn api.main:app --port 8000
 
 | Síntoma | Causa probable | Solución |
 |---|---|---|
-| «backend no disponible» en la barra superior | `VITE_API_URL` mal escrita o con barra final | Corrige la variable y **vuelve a desplegar**: Vite incrusta las variables durante la construcción |
+| El aviso «Despertando el servicio…» no desaparece | `VITE_API_URL` mal escrita o con barra final | Corrige la variable y **vuelve a desplegar**: Vite incrusta las variables durante la construcción |
 | Error de CORS en la consola del navegador | `CORS_ORIGINS` no incluye el dominio del frontend | Añade la URL exacta, con `https://` y sin barra final |
 | Los cambios de variables no surten efecto | Vite compila las variables en el *build* | Fuerza un nuevo despliegue; no basta con guardar la variable |
-| La primera carga tarda casi un minuto | El nivel gratuito suspende el servicio | Es normal; abre la URL unos minutos antes de una demostración |
+| La primera carga tarda casi un minuto | El nivel gratuito suspende el servicio | Es normal; habilita la tarea programada y abre la URL antes de una demostración |
 | `/employee/U-0737` da 404 al recargar | Falta la redirección de página única | Verifica que `ui/vercel.json` esté desplegado |
 | El asistente responde «no configurado» | Falta `DEEPSEEK_API_KEY` o no se guardó | Revísala en **Environment** y guarda los cambios |
 | El asistente da error de saldo | La cuenta de DeepSeek no tiene créditos | Revisa el balance en su plataforma |

@@ -6,6 +6,7 @@
  * entre vistas, y la invalidación tras el feedback mantiene la cola de triage coherente.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { api, caseId, type Decision, type Nivel } from '../api/client';
 
@@ -13,17 +14,62 @@ import { api, caseId, type Decision, type Nivel } from '../api/client';
 const ESTABLE = { staleTime: 5 * 60 * 1000, retry: 1 } as const;
 
 /**
- * Backends en planes gratuitos (Render) se duermen tras ~15 min de inactividad y tardan hasta
- * ~50s en despertar en la primera petición. Sin esto, la app se rinde tras 1 reintento (~1-3s) y
- * queda mostrando "backend no disponible" aunque el servidor ya haya despertado — el usuario tiene
- * que recargar manualmente. Con 6 reintentos y el backoff exponencial de TanStack Query
- * (1s, 2s, 4s, 8s, 16s, 30s ≈ 61s acumulados) la app sigue mostrando "conectando…" hasta que el
- * backend responde, sin intervención manual. Se aplica solo a las queries del primer render.
+ * Backends en planes gratuitos (Render) se duermen tras ~15 min de inactividad y el arranque de la
+ * imagen puede pasar de un minuto. Sin tolerancia, la app se rinde en segundos y queda mostrando un
+ * error aunque el servidor ya haya despertado, obligando a recargar a mano.
+ *
+ * Con 10 reintentos y la espera creciente acotada a 12s (1, 2, 4, 8 y luego 12 fijos ≈ 87s
+ * acumulados) la app espera todo el arranque en frío por sí sola.
  */
-const TOLERANTE_A_COLD_START = { staleTime: 5 * 60 * 1000, retry: 6 } as const;
+const TOLERANTE_A_COLD_START = {
+  staleTime: 5 * 60 * 1000,
+  retry: 4,
+  retryDelay: (intento: number) => Math.min(1000 * 2 ** intento, 5_000),
+  // Red de seguridad: mientras no haya una respuesta buena se vuelve a preguntar cada 5 s, así que
+  // la app se recupera sola aunque el servidor tarde varios minutos en arrancar. Se mantiene
+  // también con la pestaña en segundo plano, porque es habitual abrir el enlace, irse a otra
+  // pestaña mientras despierta y volver esperando encontrarlo cargado.
+  refetchInterval: (query: { state: { status: string } }) =>
+    query.state.status === 'success' ? false : 5_000,
+  refetchIntervalInBackground: true,
+} as const;
 
 export const useHealth = () =>
   useQuery({ queryKey: ['health'], queryFn: api.health, ...TOLERANTE_A_COLD_START });
+
+/**
+ * Estado del backend para la interfaz. Se considera "despertando" cualquier situación en la que
+ * aún no hay respuesta buena pero ya hubo al menos un intento fallido, sin separar el error del
+ * reintento: el sondeo sigue insistiendo en ambos casos, y mostrar un error mientras se sigue
+ * intentando haría creer que la aplicación está rota.
+ */
+export function useEstadoBackend() {
+  const salud = useHealth();
+  const qc = useQueryClient();
+  const listo = salud.isSuccess;
+  const { refetch } = salud;
+
+  // Bucle de recuperación propio. No se delega en la programación interna de reintentos porque
+  // basta con que una petición quede en un estado sin resolver para que deje de reprogramarse y
+  // la vista se congele. Aquí se pregunta cada 5 s hasta obtener respuesta, pase lo que pase.
+  useEffect(() => {
+    if (listo) return;
+    const id = window.setInterval(() => void refetch(), 5_000);
+    return () => window.clearInterval(id);
+  }, [listo, refetch]);
+
+  // En cuanto el servicio responde, el resto de consultas pueden haberse quedado en error: se
+  // refrescan una sola vez para que la interfaz se llene sola, sin que nadie recargue.
+  useEffect(() => {
+    if (listo) void qc.refetchQueries();
+  }, [listo, qc]);
+
+  return {
+    despertando: !listo && salud.failureCount > 0,
+    listo,
+    datos: salud.data,
+  };
+}
 
 export const useAssistantHealth = () =>
   useQuery({ queryKey: ['assistant-health'], queryFn: api.assistantHealth, ...TOLERANTE_A_COLD_START });
